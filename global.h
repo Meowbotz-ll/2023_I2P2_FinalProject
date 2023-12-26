@@ -9,6 +9,8 @@
 
 #define window_width 800
 #define window_height 600
+#define field_width 600
+#define field_height 600
 
 extern bool key_state[ALLEGRO_KEY_MAX];
 
