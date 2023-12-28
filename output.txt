@@ -1,3 +1,18 @@
+File: .\bullet.cpp 
+-------------- 
+#include "bullet.h"
+
+Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy) {}
+
+void Bullet::update() {
+    x += dx;
+    y += dy;
+}
+
+void Bullet::draw() {
+    al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
+}
+============== 
 File: .\gameWindow.cpp 
 -------------- 
 #include "gameWindow.h"
@@ -35,6 +50,10 @@ void GameWindow::init() {
         Log::Error("Failed to initialize primitives addon");
         return;
     }
+    if (!al_install_mouse()) {
+        Log::Error("Failed to initialize mouse");
+        return;
+    }
     // Initialize other necessary Allegro add-ons here
 
     // Create display
@@ -68,6 +87,7 @@ void GameWindow::init() {
     al_register_event_source(event_queue, al_get_display_event_source(display));
     al_register_event_source(event_queue, al_get_keyboard_event_source());
     al_register_event_source(event_queue, al_get_timer_event_source(timer));
+    al_register_event_source(event_queue, al_get_mouse_event_source());
     al_start_timer(timer);
 
     player.init(400, 500);
@@ -82,22 +102,41 @@ void GameWindow::run() {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
 
-        if (ev.type == ALLEGRO_EVENT_TIMER) {
-            player.update();
-        } else if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE) {
-            break;
-        } else if (ev.type == ALLEGRO_EVENT_KEY_DOWN) {
-            key_state[ev.keyboard.keycode] = true;
-        } else if (ev.type == ALLEGRO_EVENT_KEY_UP) {
-            key_state[ev.keyboard.keycode] = false;
-            if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+        switch (ev.type) {
+            case ALLEGRO_EVENT_TIMER:
+                player.update();
+                // Add any other updates here, e.g., for game world, enemies, etc.
+                break;
+
+            case ALLEGRO_EVENT_DISPLAY_CLOSE:
                 doexit = true;
-            }
+                break;
+
+            case ALLEGRO_EVENT_KEY_DOWN:
+                key_state[ev.keyboard.keycode] = true;
+                break;
+
+            case ALLEGRO_EVENT_KEY_UP:
+                key_state[ev.keyboard.keycode] = false;
+                if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+                    doexit = true;
+                }
+                break;
+
+            case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+                if (ev.mouse.button & 1) { // Left mouse button
+                    Log::Info("Left Mouse Button Clicked");
+                    player.shoot(ev.mouse.x, ev.mouse.y);
+                }
+                break;
+
+            // Add additional cases here for other types of events
         }
 
         draw();
     }
 }
+
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -161,12 +200,17 @@ File: .\player.cpp
 -------------- 
 #include "player.h"
 #include "global.h"
+#include "bullet.h"
+#include <vector>
+#include <cmath>
 
+std::vector<Bullet> bullets;
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 
-Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true) {}
+Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f) {
+}
 
 void Player::init(float x, float y) {
     this->x = x;
@@ -198,9 +242,33 @@ void Player::update() {
         dy = JUMP_STRENGTH;
         onGround = false;
     }
+
+    // Update bullets
+    for (auto& bullet : bullets) {
+        bullet.update();
+    }
 }
 
 void Player::draw() {
     al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
+        // Draw each bullet
+    for (auto& bullet : bullets) {
+        bullet.draw();
+    }
 }
+
+void Player::shoot(float target_x, float target_y) {
+    float dx = target_x - x;
+    float dy = target_y - y;
+    float length = std::sqrt(dx * dx + dy * dy);
+    dx /= length; // Normalize
+    dy /= length;
+    
+    // Use bulletSpeed to determine the velocity of the bullet
+    dx *= bulletSpeed;
+    dy *= bulletSpeed;
+
+    bullets.push_back(Bullet(x, y, dx, dy));
+}
+
 ============== 

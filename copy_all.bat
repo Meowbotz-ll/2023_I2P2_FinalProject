@@ -19,4 +19,7 @@ for %%f in ("%DIR%\*.cpp") do (
     echo ============== >> %OUTPUT_FILE%
 )
 
-echo Output written to %OUTPUT_FILE%
+REM Copy the entire content of the output file to the clipboard
+type %OUTPUT_FILE% | clip
+
+echo Output written to %OUTPUT_FILE% and its contents copied to clipboard.
