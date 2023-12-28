@@ -1,13 +1,14 @@
 #ifndef LOG_H
 #define LOG_H
 
-#include <iostream>
 #include <string>
-using namespace std;
+#include <iostream>
 
-class log {
+class Log {
 public:
-    log(string s);
+    static void Info(const std::string& message);
+    static void Error(const std::string& message);
+    // Add more methods for different log levels if needed
 };
 
 #endif // LOG_H
