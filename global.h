@@ -1,17 +1,8 @@
-#ifndef GLOBAL_H_INCLUDED
-#define GLOBAL_H_INCLUDED
+#ifndef GLOBAL_H
+#define GLOBAL_H
 
-#include <allegro5/allegro_font.h>
-
-#define font_size 12
-#define grid_width 40
-#define grid_height 40
-
-#define window_width 800
-#define window_height 600
-#define field_width 600
-#define field_height 600
+#include <allegro5/allegro.h>
 
 extern bool key_state[ALLEGRO_KEY_MAX];
 
-#endif // GLOBAL_H_INCLUDED
+#endif // GLOBAL_H
