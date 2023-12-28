@@ -3,6 +3,7 @@
 
 #include "player.h"
 #include "global.h"
+#include "log.h"
 
 class GameWindow {
 public:

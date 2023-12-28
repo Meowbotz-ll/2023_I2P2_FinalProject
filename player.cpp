@@ -1,5 +1,6 @@
 #include "player.h"
 #include "global.h"
+
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
