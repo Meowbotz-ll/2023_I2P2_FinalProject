@@ -35,6 +35,7 @@ private:
     bool key_state[ALLEGRO_KEY_MAX];
     void update();
     void draw() const;
+    void erase();
     // Function to check collision between Bullet and Enemy
     bool checkCollision(const Bullet& bullet, const Enemy& enemy) const;
 };

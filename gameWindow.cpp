@@ -110,21 +110,13 @@ void GameWindow::run() {
                     }
                 }
 
-
-                // Remove dead enemies - 修改點在這裡
-                enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-                    [](const Enemy& enemy) { return !enemy.isAlive(); }),
-                    enemies.end());
-                
-                // 移除不活躍的子彈
-                bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
-                    [](const Bullet& bullet) { return !bullet.isAlive(); }),
-                    bullets.end());
-
                 // Update living enemies
-                for (auto& enemy : enemies) {
-                    enemy.update();
-                }
+                                for (auto& enemy : enemies) {
+                                    enemy.update();
+                                }
+                
+                // 移除不活躍的子彈和敵人
+                erase();
                 
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -158,6 +150,18 @@ void GameWindow::run() {
     }
 }
 
+void GameWindow::erase(){
+    // 移除不活躍的子彈
+    bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+                                 [](const Bullet& bullet) { return !bullet.isAlive(); }),
+                  bullets.end());
+
+    // 移除不活躍的敵人
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                                 [](const Enemy& enemy) { return !enemy.isAlive(); }),
+                  enemies.end());
+}
+
 
 void GameWindow::draw() const {
     al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -165,15 +169,19 @@ void GameWindow::draw() const {
     for (const auto& enemy : enemies) {
         enemy.draw();
     }
+    for (const auto& bullet : bullets) {
+        bullet.draw();
+    }
     al_flip_display();
 }
 
-// GameWindow.cpp
 
-// GameWindow.cpp
 
 bool GameWindow::checkCollision(const Bullet& bullet, const Enemy& enemy) const {
-    return Circle::isOverlap(&(bullet.hitbox), &(enemy.hitbox));
+    Log::Info("Attack!");
+    // 在 GameWindow::checkCollision 方法中
+    return Circle::isOverlap(&(bullet.hitbox), &(enemy.getHitbox()));
+
 }
 
 

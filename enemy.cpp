@@ -1,17 +1,24 @@
 #include "enemy.h"
 #include "global.h"
 #include "bullet.h"
+#include "log.h"
 #include <cstdlib>
 #include <ctime>
 
 Enemy::Enemy()
-    : speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) ,hitbox(0, 0, 0/*ENEMY_RADIUS*/){ // Yellow color
+    : x(0), y(0), speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) ,hitbox(x, y, ENEMY_RADIUS){ // Yellow color
     std::srand(std::time(0)); // Seed for random number generation.
+    image = al_load_bitmap("C:/I2P2_final_project/2023_I2P2_FinalProject/enemy.jpg");
+    if (!image) {
+        Log::Error("Failed to load enemy image");
+    }
     respawn();
 }
 
 Enemy::~Enemy() {
-    // Clean up resources if needed.
+    if (image) {
+        al_destroy_bitmap(image);
+    }
 }
 
 void Enemy::initialize() {
@@ -26,13 +33,14 @@ void Enemy::update() {
         if (x > al_get_display_width(al_get_current_display())) {
             respawn();
         }
+        hitbox.x = x;
+        hitbox.y = y;
     }
 }
 
-void Enemy::draw() const{
-    if (alive) {
-        // Draw a yellow circle representing the enemy.
-        al_draw_filled_circle(x + 10, y + 10, 10, color);
+void Enemy::draw() const {
+    if (alive && image) {
+        al_draw_bitmap(image, x, y, 0);
     }
 }
 
@@ -56,4 +64,6 @@ void Enemy::respawn() {
     x = 0 - rand() % 400; // Randomize initial x position off the screen.
     y = rand() % (al_get_display_height(al_get_current_display()) - 20);
     alive = true;
+    hitbox.x = x;
+    hitbox.y = y;
 }
