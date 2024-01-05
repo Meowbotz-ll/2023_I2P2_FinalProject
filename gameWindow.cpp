@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "gameWindow.h"
 #include "allegro_setup.h"
 #include "log.h"  // Include your log class
@@ -75,12 +76,20 @@ void GameWindow::init() {
 
     player.init(400, 500);
 
+    // Initialize enemies
+    for (int i = 0; i < 5; ++i) {
+        Enemy enemy;
+        enemy.initialize();
+        enemies.push_back(enemy);
+    }
+
     Log::Info("GameWindow initialization complete");
 }
 
 
 void GameWindow::run() {
     Log::Info("Game Started!");
+   
     while (!doexit) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
@@ -88,6 +97,35 @@ void GameWindow::run() {
         switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
                 player.update();
+
+                 // Check for collisions between bullets and enemies
+                // 在 GameWindow::run 方法中
+                for (auto& bullet : bullets) {
+                    for (auto& enemy : enemies) {
+                        if (bullet.isAlive() && enemy.isAlive() && checkCollision(bullet, enemy)) {
+                            Log::Info("Collision Detected");
+                            bullet.hit();
+                            enemy.hit();
+                        }
+                    }
+                }
+
+
+                // Remove dead enemies - 修改點在這裡
+                enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                    [](const Enemy& enemy) { return !enemy.isAlive(); }),
+                    enemies.end());
+                
+                // 移除不活躍的子彈
+                bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+                    [](const Bullet& bullet) { return !bullet.isAlive(); }),
+                    bullets.end());
+
+                // Update living enemies
+                for (auto& enemy : enemies) {
+                    enemy.update();
+                }
+                
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -121,8 +159,21 @@ void GameWindow::run() {
 }
 
 
-void GameWindow::draw() {
+void GameWindow::draw() const {
     al_clear_to_color(al_map_rgb(0, 0, 0));
     player.draw();
+    for (const auto& enemy : enemies) {
+        enemy.draw();
+    }
     al_flip_display();
 }
+
+// GameWindow.cpp
+
+// GameWindow.cpp
+
+bool GameWindow::checkCollision(const Bullet& bullet, const Enemy& enemy) const {
+    return Circle::isOverlap(&(bullet.hitbox), &(enemy.hitbox));
+}
+
+

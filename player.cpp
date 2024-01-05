@@ -49,7 +49,7 @@ void Player::update() {
     }
 }
 
-void Player::draw() {
+void Player::draw() const{
     al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
         // Draw each bullet
     for (auto& bullet : bullets) {

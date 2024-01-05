@@ -8,7 +8,7 @@ public:
     Player();
     void init(float x, float y);
     void update();
-    void draw();
+    void draw() const;
     void shoot(float target_x, float target_y);
 private:
     float x, y, dy;
