@@ -11,7 +11,7 @@ const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 
 Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f) {
-    image = al_load_bitmap("C:/I2P2_final_project/2023_I2P2_FinalProject/player.png");
+    image = al_load_bitmap("pic/player.png");
     if (!image) {
         Log::Error("Failed to load player image");
     }

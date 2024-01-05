@@ -8,7 +8,7 @@
 Enemy::Enemy()
     : x(0), y(0), speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) ,hitbox(x, y, ENEMY_RADIUS){ // Yellow color
     std::srand(std::time(0)); // Seed for random number generation.
-    image = al_load_bitmap("C:/I2P2_final_project/2023_I2P2_FinalProject/enemy.jpg");
+    //image = al_load_bitmap("pic/enemy.jpg");
     if (!image) {
         Log::Error("Failed to load enemy image");
     }

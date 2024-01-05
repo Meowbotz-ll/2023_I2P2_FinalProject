@@ -6,7 +6,7 @@ const float Bullet::SIZE = 10.0f;
 
 Bullet::Bullet(float x, float y, float dx, float dy)
     : x(x), y(y), dx(dx), dy(dy), hitbox(x, y, Bullet::SIZE), alive(true) {
-    image = al_load_bitmap("C:/I2P2_final_project/2023_I2P2_FinalProject/bullet.jpg");
+    //image = al_load_bitmap("pic/bullet.jpg");
     if (!image) {
         Log::Error("Failed to load bullet image");
     }
