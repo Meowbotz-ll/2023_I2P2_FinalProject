@@ -6,8 +6,10 @@
 #include "enemy.h"
 #include "log.h"
 #include "bullet.h"
-
+#include "MenuScene.h"
 #include <vector>
+
+
 
 class GameWindow {
 public:
@@ -16,6 +18,14 @@ public:
     void init();
     void run();
 private:
+
+    enum GameState {
+        MENU,
+        GAMEPLAY
+    };
+
+    GameState current_state;
+    //MenuScene menu;
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
     Player player;

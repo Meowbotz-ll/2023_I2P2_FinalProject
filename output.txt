@@ -6,7 +6,7 @@ File: .\bullet.cpp
 const float Bullet::SIZE = 10.0f;
 
 Bullet::Bullet(float x, float y, float dx, float dy)
-    : x(x), y(y), dx(dx), dy(dy), alive(true) {}
+    : x(x), y(y), dx(dx), dy(dy), alive(true) ,hitbox(x, y, Bullet::SIZE){}
 
 void Bullet::update() {
     if (alive) {
@@ -67,7 +67,7 @@ File: .\enemy.cpp
 #include <ctime>
 
 Enemy::Enemy()
-    : speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) { // Yellow color
+    : speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) ,hitbox(0, 0, 0/*ENEMY_RADIUS*/){ // Yellow color
     std::srand(std::time(0)); // Seed for random number generation.
     respawn();
 }
@@ -349,10 +349,14 @@ using namespace std;
 
 int main() {
     GameWindow window;
+    window.init();  // Make sure this calls menu.init()
     window.run();
 
     return 0;
 }
+============== 
+File: .\menuScene.cpp 
+-------------- 
 ============== 
 File: .\player.cpp 
 -------------- 
