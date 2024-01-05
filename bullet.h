@@ -5,7 +5,6 @@
 #include <allegro5/allegro.h>
 #include "allegro_setup.h"
 #include "circle.h"
-
 /*class Bullet {
 public:
     float x, y;

@@ -4,7 +4,7 @@
 const float Bullet::SIZE = 10.0f;
 
 Bullet::Bullet(float x, float y, float dx, float dy)
-    : x(x), y(y), dx(dx), dy(dy), alive(true) {}
+    : x(x), y(y), dx(dx), dy(dy), alive(true) ,hitbox(x, y, Bullet::SIZE){}
 
 void Bullet::update() {
     if (alive) {

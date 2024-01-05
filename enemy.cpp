@@ -5,7 +5,7 @@
 #include <ctime>
 
 Enemy::Enemy()
-    : speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) { // Yellow color
+    : speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) ,hitbox(0, 0, 0/*ENEMY_RADIUS*/){ // Yellow color
     std::srand(std::time(0)); // Seed for random number generation.
     respawn();
 }

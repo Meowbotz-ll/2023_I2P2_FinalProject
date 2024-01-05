@@ -2,19 +2,127 @@ File: .\bullet.cpp
 -------------- 
 #include "bullet.h"
 
-Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy) {}
+
+const float Bullet::SIZE = 10.0f;
+
+Bullet::Bullet(float x, float y, float dx, float dy)
+    : x(x), y(y), dx(dx), dy(dy), alive(true) {}
 
 void Bullet::update() {
-    x += dx;
-    y += dy;
+    if (alive) {
+        x += dx;
+        y += dy;
+    }
 }
 
-void Bullet::draw() {
-    al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
+void Bullet::draw() const {
+    if (alive) {
+        al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
+    }
+}
+
+bool Bullet::isAlive() const {
+    return alive;
+}
+
+void Bullet::hit() {
+    alive = false;
+}
+
+float Bullet::getX() const {
+    return x;
+}
+
+float Bullet::getY() const {
+    return y;
+}
+============== 
+File: .\circle.cpp 
+-------------- 
+#include "Circle.h"
+
+// 判斷兩個圓是否重疊的函數
+bool Circle::isOverlap(const Circle *circle_1, const Circle *circle_2)
+{
+    // 計算兩圓半徑和
+    int length = circle_1->r + circle_2->r;
+
+    // 計算兩圓中心的距離的平方
+    int distance_square = (circle_1->x - circle_2->x) * (circle_1->x - circle_2->x)
+                            + (circle_1->y - circle_2->y) * (circle_1->y - circle_2->y);
+
+    // 判斷是否重疊
+    if(length * length >= distance_square)
+        return true;
+
+    return false;
+}
+============== 
+File: .\enemy.cpp 
+-------------- 
+#include "enemy.h"
+#include "global.h"
+#include "bullet.h"
+#include <cstdlib>
+#include <ctime>
+
+Enemy::Enemy()
+    : speed(2.0), alive(false), color(al_map_rgb(255, 255, 0)) { // Yellow color
+    std::srand(std::time(0)); // Seed for random number generation.
+    respawn();
+}
+
+Enemy::~Enemy() {
+    // Clean up resources if needed.
+}
+
+void Enemy::initialize() {
+    respawn();
+}
+
+void Enemy::update() {
+    if (alive) {
+        x += speed;
+
+        // Check if the enemy is out of the screen.
+        if (x > al_get_display_width(al_get_current_display())) {
+            respawn();
+        }
+    }
+}
+
+void Enemy::draw() const{
+    if (alive) {
+        // Draw a yellow circle representing the enemy.
+        al_draw_filled_circle(x + 10, y + 10, 10, color);
+    }
+}
+
+bool Enemy::isAlive() const {
+    return alive;
+}
+
+void Enemy::hit() {
+        alive = false;
+}
+
+float Enemy::getX() const {
+    return x;
+}
+
+float Enemy::getY() const {
+    return y;
+}
+
+void Enemy::respawn() {
+    x = 0 - rand() % 400; // Randomize initial x position off the screen.
+    y = rand() % (al_get_display_height(al_get_current_display()) - 20);
+    alive = true;
 }
 ============== 
 File: .\gameWindow.cpp 
 -------------- 
+#include <algorithm>
 #include "gameWindow.h"
 #include "allegro_setup.h"
 #include "log.h"  // Include your log class
@@ -92,12 +200,20 @@ void GameWindow::init() {
 
     player.init(400, 500);
 
+    // Initialize enemies
+    for (int i = 0; i < 5; ++i) {
+        Enemy enemy;
+        enemy.initialize();
+        enemies.push_back(enemy);
+    }
+
     Log::Info("GameWindow initialization complete");
 }
 
 
 void GameWindow::run() {
     Log::Info("Game Started!");
+   
     while (!doexit) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
@@ -105,6 +221,35 @@ void GameWindow::run() {
         switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
                 player.update();
+
+                 // Check for collisions between bullets and enemies
+                // 在 GameWindow::run 方法中
+                for (auto& bullet : bullets) {
+                    for (auto& enemy : enemies) {
+                        if (bullet.isAlive() && enemy.isAlive() && checkCollision(bullet, enemy)) {
+                            Log::Info("Collision Detected");
+                            bullet.hit();
+                            enemy.hit();
+                        }
+                    }
+                }
+
+
+                // Remove dead enemies - 修改點在這裡
+                enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                    [](const Enemy& enemy) { return !enemy.isAlive(); }),
+                    enemies.end());
+                
+                // 移除不活躍的子彈
+                bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+                    [](const Bullet& bullet) { return !bullet.isAlive(); }),
+                    bullets.end());
+
+                // Update living enemies
+                for (auto& enemy : enemies) {
+                    enemy.update();
+                }
+                
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -138,11 +283,24 @@ void GameWindow::run() {
 }
 
 
-void GameWindow::draw() {
+void GameWindow::draw() const {
     al_clear_to_color(al_map_rgb(0, 0, 0));
     player.draw();
+    for (const auto& enemy : enemies) {
+        enemy.draw();
+    }
     al_flip_display();
 }
+
+// GameWindow.cpp
+
+// GameWindow.cpp
+
+bool GameWindow::checkCollision(const Bullet& bullet, const Enemy& enemy) const {
+    return Circle::isOverlap(&(bullet.hitbox), &(enemy.hitbox));
+}
+
+
 ============== 
 File: .\global.cpp 
 -------------- 
@@ -249,7 +407,7 @@ void Player::update() {
     }
 }
 
-void Player::draw() {
+void Player::draw() const{
     al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
         // Draw each bullet
     for (auto& bullet : bullets) {
