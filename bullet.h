@@ -3,6 +3,7 @@
 
 #pragma once
 #include <allegro5/allegro.h>
+#include <allegro5/allegro_image.h>
 #include "allegro_setup.h"
 #include "circle.h"
 /*class Bullet {
@@ -22,7 +23,8 @@ public:
 class Bullet {
 public:
     Bullet(float x, float y, float dx, float dy);
-    Circle hitbox;
+    
+    ~Bullet();
     void update();
     void draw() const;
 
@@ -30,8 +32,10 @@ public:
     void hit();            // Add hit function
     float getX() const;    // Add getX function
     float getY() const;    // Add getY function
+    Circle hitbox;
 
 private:
+    
     float x;
     float y;
     float dx;
@@ -39,6 +43,7 @@ private:
 
     static const float SIZE;
     bool alive;
+    ALLEGRO_BITMAP* image;  // 声明 image 变量
 };
 
 #endif // BULLET_H

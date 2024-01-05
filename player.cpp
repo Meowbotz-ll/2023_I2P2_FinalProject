@@ -1,6 +1,7 @@
 #include "player.h"
 #include "global.h"
 #include "bullet.h"
+#include "log.h"
 #include <vector>
 #include <cmath>
 
@@ -10,6 +11,17 @@ const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 
 Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f) {
+    image = al_load_bitmap("C:/I2P2_final_project/2023_I2P2_FinalProject/player.png");
+    if (!image) {
+        Log::Error("Failed to load player image");
+    }
+}
+
+Player::~Player() {
+    if (image) {
+        al_destroy_bitmap(image);
+    }
+    // 注意：如果 Player 類中也有子彈的列表，也需要釋放這些子彈的資源。
 }
 
 void Player::init(float x, float y) {
@@ -39,8 +51,8 @@ void Player::update() {
     }
 
     if (key_state[ALLEGRO_KEY_SPACE] && onGround) {
-        dy = JUMP_STRENGTH;
-        onGround = false;
+        dy = JUMP_STRENGTH; // 設定向上的速度
+        onGround = false;   // 標記玩家不再在地面上
     }
 
     // Update bullets
@@ -49,10 +61,12 @@ void Player::update() {
     }
 }
 
-void Player::draw() const{
-    al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
-        // Draw each bullet
-    for (auto& bullet : bullets) {
+void Player::draw() const {
+    if (image) {
+        al_draw_bitmap(image, x, y, 0);
+    }
+    // 繪製子彈
+    for (const auto& bullet : bullets) {
         bullet.draw();
     }
 }
