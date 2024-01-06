@@ -10,7 +10,7 @@ using namespace std;
 GameWindow::GameWindow() : currentState(MENU),backgroundImage(nullptr),doexit(false){
     Log::Info("GameWindow Created");
     init();
-    enemies.push_back(Enemy(100, 100));
+    enemies.push_back(Enemy(100, 100, 0.5));
 }
 
 GameWindow::~GameWindow() {
@@ -167,12 +167,24 @@ void GameWindow::run() {
 
             case GAME:
             //Log::Info("In Menu State");
+            static double last_spawn_time = 0;
+            static double enemySpawnInterval = 2.0;
         switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
             
                 player.update();
                 for (auto& enemy : enemies) {
                     enemy.update();
+                }
+                // 生成新敌人的代码
+                
+                if (al_get_time() - last_spawn_time > 2.0 + enemySpawnInterval) { // 每2秒生成一个敌人
+                    last_spawn_time = al_get_time();
+                    float spawnY = static_cast<float>(rand() % 600); // 在屏幕高度范围内随机生成垂直位置
+                    float spawnX = -1; // 在屏幕左侧外生成敌人
+                    float velocityX = 1.0; // 向右移动的速度
+                    enemySpawnInterval = std::max(0.1, enemySpawnInterval - 1.0); // 逐渐减少间隔时间，但保持至少为1秒
+                    enemies.push_back(Enemy(spawnX, spawnY, velocityX));
                 }
                 
                 // Add any other updates here, e.g., for game world, enemies, etc.
@@ -205,6 +217,8 @@ void GameWindow::run() {
             // Add additional cases here for other types of events
         }
 
+        
+
 
         for (auto& bullet : player.getBullets()) {
             if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
@@ -220,13 +234,15 @@ void GameWindow::run() {
             }
         }
 
+        // 移除已不活动的敌人
         enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
-                    [](const Enemy& enemy) { return !enemy.isAlive(); }), enemies.end());
+                   [](const Enemy& enemy) { return !enemy.isAlive() || enemy.isOffScreen(); }), enemies.end());
 
         break;
 
         }
 
+        
         draw();
     }
 }
