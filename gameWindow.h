@@ -10,12 +10,13 @@
 #include <string>
 #include <vector>
 #include <sstream> // Include this header for ostringstream
-
+#include <iomanip>
 #include "menu.h"
 
 enum GameState {
     MENU,
-    GAME
+    GAME,
+    GAME_OVER
 };
 
 class GameWindow {
@@ -27,6 +28,11 @@ public:
     bool checkCollision(const Bullet& bullet, const Enemy& enemy);  // 添加参数
     std::vector<Bullet>& getBullets();  // 获取子弹的方法
     void draw();
+    void initScene();
+    void initMenuScene();
+    void initGameScene();
+    void initGameOverScene();
+    void updateGameOverScene();
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
@@ -34,6 +40,7 @@ private:
     std::vector<Enemy> enemies;  // 敌人的容器
     std::vector<Bullet> bullets;  // 将其作为成员变量
     GameState currentState;
+    GameState previousState;
     ALLEGRO_FONT* font;
     ALLEGRO_SAMPLE *menuMusic;
     ALLEGRO_SAMPLE *gameMusic;
@@ -45,8 +52,7 @@ private:
     int score=0;             // Player's current score
     double startTime;      // Time when the game started
     double currentTime;    // Current game time
-    bool drawInit=true;
-    
+    bool gameSceneInitialized;
 };
 
 #endif // GAME_WINDOW_H

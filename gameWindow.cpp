@@ -7,7 +7,7 @@
 #include <iterator>
 using namespace std;
 
-GameWindow::GameWindow() : currentState(MENU),backgroundImage(nullptr),doexit(false){
+GameWindow::GameWindow() : currentState(MENU),previousState(MENU),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
     Log::Info("GameWindow Created");
     init();
     enemies.push_back(Enemy(100, 100, 0.5));
@@ -144,13 +144,53 @@ if (!menuMusic || !gameMusic) {
     Log::Info("GameWindow initialization complete");
 }
 
+void GameWindow::initMenuScene()
+{
+    Log::Info("Menu Scene Initialized");
+}
+void GameWindow::initGameOverScene() {
+    // Add your game over scene initialization code here
+    Log::Info("Game Over Scene Initialized");
+    // Example: Load game over assets, set up UI elements, etc.
+}
+void GameWindow::initGameScene()
+{
+    if(!gameSceneInitialized)
+    {
+        if(backgroundImage!=nullptr)
+        {
+        al_draw_bitmap(backgroundImage, 0, 0, 0);
+        Log::Info("Background Init");
+        }
+        gameSceneInitialized=true;
+    }
+    al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+}
+void GameWindow::initScene() {
+    // Check if the current state is different from the previous state
+    if (currentState != previousState) {
+        switch (currentState) {
+            case MENU:
+                initMenuScene();  // Initialize menu-specific resources
+                break;
+            case GAME:
+                initGameScene();  // Initialize game-specific resources
+                break;
+            case GAME_OVER:
 
+                break;
+            // Add other cases as needed
+        }
+        previousState = currentState;  // Update the previous state
+    }
+}
 void GameWindow::run() {
     Log::Info("Game Started!");
 
     while (!doexit) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
+        initScene();
         switch (currentState) {
             case MENU:
             //Log::Info("In Menu State");
@@ -169,7 +209,14 @@ void GameWindow::run() {
             //Log::Info("In Menu State");
             static double last_spawn_time = 0;
             static double enemySpawnInterval = 2.0;
-        switch (ev.type) {
+            // Check if the player's health is 0 or less
+            if (player.getHp() <= 0) {
+                Log::Info("Game Over!");
+                //currentState = GAME_OVER;
+            }
+            
+
+            switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
             
                 player.update();
@@ -212,6 +259,14 @@ void GameWindow::run() {
                     Log::Info("Left Mouse Button Clicked");
                     player.shoot(ev.mouse.x, ev.mouse.y);
                 }
+                if (ev.mouse.button & 2) {  // Right mouse button
+        Log::Info("Right Mouse Button Clicked");
+
+    }
+                break;
+                case GAME_OVER:
+
+                
                 break;
 
             // Add additional cases here for other types of events
@@ -237,6 +292,7 @@ void GameWindow::run() {
         // 移除已不活动的敌人
         enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
                    [](const Enemy& enemy) { return !enemy.isAlive() || enemy.isOffScreen(); }), enemies.end());
+        case GAME_OVER:
 
         break;
 
@@ -250,49 +306,30 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    // Draw the background image first
-    
+
+    // Move the declarations outside the switch statement
+    std::ostringstream timeStream;
+    std::string timeText;
+    std::string scoreText;
+    const int maxHealthWidth = 750; // Maximum width of the health bar
+    int currentHealthWidth;
 
     switch (currentState) {
         case MENU:
-            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             menu.draw();
             break;
 
         case GAME:
-            if(drawInit)
-            {
-            //al_draw_bitmap(backgroundImage, 0, 0, 0);
-            Log::Info("Background Init");
-            drawInit=false;
-            }
             currentTime = static_cast<int>(al_get_time() - startTime);
-
-            std::ostringstream timeStream;
-            timeStream.precision(0); // Set precision to 0 to avoid any decimals
             timeStream << "Time: " << currentTime;
-            std::string timeText = timeStream.str();
+            timeText = timeStream.str();
+            scoreText = "Score: " + std::to_string(score);
 
-            std::string scoreText = "Score: " + std::to_string(score);
             // Draw Health Bar
-            const int maxHealthWidth = 750; // Maximum width of the health bar
-            int currentHealthWidth = static_cast<int>((player.getHp() / 100) * maxHealthWidth);
-            al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0)); // Draw health bar at the bottom
+            currentHealthWidth = static_cast<int>((player.getHp() / 100) * maxHealthWidth);
+            al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0));
 
-            //debug Health bar
-            const int healthBarHeight = 20;  // Height of the health bar
-            const int healthBarYPosition = 600 - 50;  // Y position of the health bar from the bottom of the screen
-            const int healthBarXPosition = 20;  // X position of the health bar from the left of the screen
-
-            // Drawing a full HP bar for debugging
-            al_draw_filled_rectangle(
-                healthBarXPosition, 
-                healthBarYPosition, 
-                healthBarXPosition + maxHealthWidth, 
-                healthBarYPosition + healthBarHeight, 
-                al_map_rgb(0, 255, 0)  // Green color for full health
-            );
-
+            // Draw text
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
             
@@ -301,7 +338,11 @@ void GameWindow::draw() {
             for (auto& enemy : enemies) {
                 enemy.draw();
             }
-            // Draw other game elements
+            break;
+
+        case GAME_OVER:
+            // Drawing code for game over screen
+            al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
             break;
     }
 
