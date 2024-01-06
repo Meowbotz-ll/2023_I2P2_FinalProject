@@ -1,13 +1,8 @@
 #include "Enemy.h"
 
 
-Enemy::Enemy(float x, float y) 
-    : x(x), y(y), hp(DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
-//Enemy::Enemy(float x, float y) 
-//    : x(x), y(y), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
-
 Enemy::Enemy(float x, float y, float vx) 
-    : x(x), y(y), vx(vx), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false) {}
+    : x(x), y(y), vx(vx), hp(DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false) {}
 
 void Enemy::update() {
     x += vx;

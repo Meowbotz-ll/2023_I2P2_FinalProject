@@ -2,4 +2,4 @@ allegro.log
 .vscode
 *.o
 game.exe
-output.txt
+*.txt
