@@ -24,6 +24,8 @@ private:
     Player player;
     GameState currentState;
     ALLEGRO_FONT* font;
+    ALLEGRO_SAMPLE *menuMusic;
+    ALLEGRO_SAMPLE *gameMusic;
     Menu menu;
     bool doexit;
     void update();

@@ -50,7 +50,27 @@ void GameWindow::init() {
         Log::Error("Failed to load font at fonts/ARCADE.TTF");
     }
     menu.init(font);
-    // Initialize other necessary Allegro add-ons here
+// Initialize audio subsystem
+    if (!al_install_audio()) {
+        Log::Error("Failed to initialize audio");
+        return;
+    }
+    if (!al_init_acodec_addon()) {
+        Log::Error("Failed to initialize audio codec addon");
+        return;
+    }
+    if (!al_reserve_samples(16)) {  // Reserve enough sample instances for your game
+        Log::Error("Failed to reserve audio samples");
+        return;
+    }
+    // Init background Music
+    menuMusic = al_load_sample("audio/Electroman-Adventures.ogg");
+    gameMusic = al_load_sample("audio/Electroman-Adventures.ogg");
+
+if (!menuMusic || !gameMusic) {
+    Log::Error("Failed to load music files");
+    return;
+}
 
     // Create display
     display = al_create_display(800, 600);
@@ -104,6 +124,7 @@ void GameWindow::run() {
                 if (ev.type == ALLEGRO_EVENT_KEY_UP) {
                     if (ev.keyboard.keycode == ALLEGRO_KEY_ENTER) {
                         Log::Info("Enter Key Pressed - Switching to Game State"); // Debug message for pressing Enter
+                        al_stop_samples(); // Stop any currently playing music
                         currentState = GAME;
                         menu.gameStart = true; // Update the flag in menu
                     }
@@ -131,7 +152,9 @@ void GameWindow::run() {
             case ALLEGRO_EVENT_KEY_UP:
                 key_state[ev.keyboard.keycode] = false;
                 if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-                    doexit = true;
+                    Log::Info("Escape Key Pressed - Switching to Menu State"); // Debug message for pressing Escape
+                    al_stop_samples(); // Stop any currently playing music
+                    currentState = MENU;
                 }
                 break;
 
@@ -158,10 +181,12 @@ void GameWindow::draw() {
 
     switch (currentState) {
         case MENU:
+            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             menu.draw();
             break;
 
         case GAME:
+            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             player.draw();
             // Draw other game elements
             break;
