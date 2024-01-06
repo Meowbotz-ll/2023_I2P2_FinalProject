@@ -2,7 +2,9 @@ File: .\bullet.cpp
 -------------- 
 #include "bullet.h"
 
-Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy) {}
+int Bullet::DEFAULT_DAMAGE = 1; // 初始化静态成员变量
+
+Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE) {}
 
 void Bullet::update() {
     x += dx;
@@ -14,14 +16,22 @@ void Bullet::update() {
 }
 
 void Bullet::draw() {
+    if(!alive) return;
     al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
-}============== 
+}
+
+void Bullet::setAlive(bool status) {
+    alive = status;
+}
+============== 
 File: .\enemy.cpp 
 -------------- 
 #include "Enemy.h"
 
-Enemy::Enemy(float x, float y, int initialHP) 
-    : x(x), y(y), hp(initialHP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
+int Enemy::DEFAULT_HP = 5;  // 初始化静态成员变量
+
+Enemy::Enemy(float x, float y) 
+    : x(x), y(y), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
 
 void Enemy::update() {
     // Update logic for enemy (optional for this example)
@@ -57,7 +67,7 @@ using namespace std;
 GameWindow::GameWindow() : currentState(MENU),doexit(false){
     Log::Info("GameWindow Created");
     init();
-    enemies.push_back(Enemy(100, 100, 10));
+    enemies.push_back(Enemy(100, 100));
 }
 
 GameWindow::~GameWindow() {
@@ -225,13 +235,34 @@ void GameWindow::run() {
             // Add additional cases here for other types of events
         }
         // 处理子弹和敌人的碰撞
-        for (auto& bullet : player.getBullets()) {
+        /*for (auto& bullet : player.getBullets()) {
             for (auto& enemy : enemies) {
                 if (checkCollision(bullet, enemy) && enemy.isAlive()) {
                     enemy.hit(1);
                 }
             }
+        }*/
+
+        /*for (auto& bullet : player.getBullets()) {
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(bullet.damage);
+                    player.markBulletDead(1);
+                    break;
+                }
+            }
+        }*/
+        for (auto& bullet : player.getBullets()) {
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(Bullet::DEFAULT_DAMAGE);
+                    bullet.setAlive(false); // 碰撞後標記子彈為不活動
+                    break; // 避免同一子彈多次碰撞檢測
+                }
+            }
         }
+
+
     
 
         // 移除不活躍的子彈和敵人
@@ -447,6 +478,10 @@ void Player::update() {
     // 移除不活跃的子弹
     /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
                 [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+    // 移除不活動的子彈
+    /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+
 }
 
 void Player::draw() {
@@ -470,6 +505,23 @@ void Player::shoot(float target_x, float target_y) {
 
     bullets.push_back(Bullet(x, y, dx, dy));
 }
+
+/*void Player::markBulletDead(int index) {
+    if (index >= 0 && index < bullets.size()) {
+        bullets[index].alive = false;
+    }
+}*/
+
+void Player::markBulletDead(int index) {
+    // 将 index 转换为无符号类型
+    auto unsignedIndex = static_cast<std::vector<Bullet>::size_type>(index);
+
+    if (index >= 0 && unsignedIndex < bullets.size()) {
+        // 使用公共方法来设置子弹的状态
+        bullets[unsignedIndex].setAlive(false);
+    }
+}
+
 
 
 

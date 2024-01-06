@@ -11,7 +11,7 @@ using namespace std;
 GameWindow::GameWindow() : currentState(MENU),doexit(false){
     Log::Info("GameWindow Created");
     init();
-    enemies.push_back(Enemy(100, 100, 10));
+    enemies.push_back(Enemy(100, 100));
 }
 
 GameWindow::~GameWindow() {
@@ -178,19 +178,21 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
-        // 处理子弹和敌人的碰撞
+
+
         for (auto& bullet : player.getBullets()) {
+            if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
+
             for (auto& enemy : enemies) {
                 if (checkCollision(bullet, enemy) && enemy.isAlive()) {
-                    enemy.hit(1);
+                    enemy.hit(Bullet::DEFAULT_DAMAGE);
+                    bullet.setHit(true); // 标记子弹已经击中敌人
+                    bullet.setAlive(false); // 设置子弹为不活跃
+                    break; // 退出内部循环
                 }
             }
         }
-    
 
-        // 移除不活躍的子彈和敵人
-        /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
-                    [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
         enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
                     [](const Enemy& enemy) { return !enemy.isAlive(); }), enemies.end());
 

@@ -12,9 +12,10 @@ public:
     void update();
     void draw();
     void shoot(float target_x, float target_y);
-    const std::vector<Bullet>& getBullets() const{
+    std::vector<Bullet>& getBullets(){
         return bullets;
     };  // 获取子弹的方法
+    void markBulletDead(int index); // 添加一個新方法來標記特定子彈為不活動
 private:
     float x, y, dy;
     bool onGround, facingRight;

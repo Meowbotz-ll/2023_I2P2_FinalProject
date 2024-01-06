@@ -7,17 +7,21 @@
 class Bullet {
 public:
     float x, y;
-    float dx, dy;
-    float damage; // 子彈的傷害值
+    static int DEFAULT_DAMAGE;
     static const int SIZE = 10;
-    bool alive;
     bool isAlive() const{
         return alive;
     }
     Bullet(float x, float y, float dx, float dy); // 现有构造函数
     void update();
     void draw();
-    
+    void setAlive(bool status); // 声明 setAlive 方法
+    void setHit(bool status) { hit = status; }
+    bool isHit() const { return hit; }
 
-    
+private:
+    float dx, dy;
+    bool alive;
+    int damage;  // 存储每个子弹的伤害值
+    bool hit; // 新增成员变量，用于跟踪子弹是否已经击中敌人
 };
