@@ -45,6 +45,17 @@ void Player::init(float startX, float startY,const char* gifFile[2]) {
     
 }
 
+float Player::getX() const{
+    return x;
+}
+
+float Player::getY() const{
+    return y;
+}
+
+
+
+
 void Player::update() {
 
     if (key_state[ALLEGRO_KEY_1]) {

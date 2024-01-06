@@ -212,9 +212,10 @@ File: .\bullet.cpp
 #include "bullet.h"
 
 Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
+Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
 
 void Bullet::update() {
-    x += dx;
+    x += dx; // 假設 speed 是成員變量
     y += dy;
     // Added: Check if the bullet is out of screen bounds
     if (x < 0 || x > 800 || y < 0 || y > 600) {
@@ -234,26 +235,40 @@ void Bullet::setAlive(bool status) {
 File: .\enemy.cpp 
 -------------- 
 #include "Enemy.h"
+#include "player.h"
 
+#include <cmath>
+#include <algorithm>
 
-Enemy::Enemy(float x, float y, float vx) 
-    : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false) {}
-
+Enemy::Enemy(float x, float y, int initialHP) 
+    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)) {} // Blue color
 
 void Enemy::update() {
-    x += vx;
-
+    if(type == AIR) x += vx;
+    else x += 2*vx;
+    
     // 检查是否离开屏幕
     if (x < 0 || x > 800) {  // 假设屏幕宽度为800
         offScreen = true;
+    }
+
+    // Update bullets
+    for (auto& bullet : bullets) {
+        bullet.update();
     }
     
 }
 
 void Enemy::draw() {
     if(!alive) return;
-    al_draw_filled_circle(x, y, RADIUS, color); // Drawing the enemy as a circle
+    ALLEGRO_COLOR color = (type == AIR) ? al_map_rgb(173, 216, 230) : al_map_rgb(255, 165, 0);
+    al_draw_filled_circle(x, y, RADIUS, color); // 根据类型绘制不同颜色的圆
+    // Draw each bullet
+    for (auto& bullet : bullets) {
+        bullet.draw();
+    }
 }
+
 
 void Enemy::hit(int damage) {
     hp -= damage;
@@ -264,7 +279,60 @@ void Enemy::hit(int damage) {
 
 bool Enemy::isAlive() const {
     return hp > 0;
-}============== 
+}
+
+void Enemy::shootAtPlayer(const Player& player) {
+    //static double lastShootTime = 0;
+    double shootInterval = 2.0; // 子弹发射间隔，以秒为单位
+
+    // 当前时间
+    double currentTime = al_get_time();
+
+    // 检查是否到达发射间隔
+    if (currentTime - lastShootTime > shootInterval) {
+        // 重置发射时间
+        lastShootTime = currentTime;
+
+        // 发射子弹的逻辑
+        if (type == AIR) {
+            float dx = player.getX() - x;
+            float dy = player.getY() - y;
+            float distance = sqrt(dx * dx + dy * dy);
+            dx /= distance;
+            dy /= distance;
+
+            // 设置子弹速度
+            float bulletSpeed = 2.0f; // 减慢子弹速度
+
+            Bullet newBullet(x, y, dx * bulletSpeed, dy * bulletSpeed);
+            newBullet.setSize(10); // 例如，设置子弹大小为10
+            bullets.push_back(newBullet);
+        }
+    }
+}
+
+
+  
+    
+
+void Enemy::drawBullets() {
+    if(type == AIR) {
+    al_draw_filled_rectangle(x, y, x + 10, y + 10, al_map_rgb(255, 255, 255));
+    }
+}
+
+
+EnemyType Enemy::getType() const {
+    return type;
+}
+
+void Enemy::removeInactiveBullets() {
+    bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
+                   [](const Bullet& bullet) { return !bullet.isAlive(); }),
+                   bullets.end());
+}
+
+============== 
 File: .\gameWindow.cpp 
 -------------- 
 #include "gameWindow.h"
@@ -279,7 +347,7 @@ using namespace std;
 GameWindow::GameWindow() : currentState(MENU),backgroundImage(nullptr),doexit(false){
     Log::Info("GameWindow Created");
     init();
-    enemies.push_back(Enemy(100, 100, 0.5));
+    //enemies.push_back(Enemy(100, 100, 0.5));
 }
 
 GameWindow::~GameWindow() {
@@ -442,17 +510,17 @@ void GameWindow::run() {
             case ALLEGRO_EVENT_TIMER:
             
                 player.update();
+                // 遍历所有敌人
                 for (auto& enemy : enemies) {
                     enemy.update();
                 }
                 // 生成新敌人的代码
-                
-                if (al_get_time() - last_spawn_time > 2.0 + enemySpawnInterval) { // 每2秒生成一个敌人
+                static double last_spawn_time = 0;
+                if (al_get_time() - last_spawn_time > 2.0) { // 每2秒生成一个敌人
                     last_spawn_time = al_get_time();
                     float spawnY = static_cast<float>(rand() % 600); // 在屏幕高度范围内随机生成垂直位置
                     float spawnX = -1; // 在屏幕左侧外生成敌人
                     float velocityX = 1.0; // 向右移动的速度
-                    enemySpawnInterval = std::max(0.1, enemySpawnInterval - 1.0); // 逐渐减少间隔时间，但保持至少为1秒
                     enemies.push_back(Enemy(spawnX, spawnY, velocityX));
                 }
                 
@@ -486,32 +554,6 @@ void GameWindow::run() {
             // Add additional cases here for other types of events
         }
 
-        
-
-
-        for (auto& bullet : player.getBullets()) {
-            if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
-
-            for (auto& enemy : enemies) {
-                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
-                    enemy.hit(bullet.getDamage());
-                    bullet.setHit(true); // 标记子弹已经击中敌人
-                    bullet.setAlive(false); // 设置子弹为不活跃
-                    if(enemy.hp<=0){score++;}
-                    break; // 退出内部循环
-                }
-            }
-        }
-
-        // 移除已不活动的敌人
-        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
-                   [](const Enemy& enemy) { return !enemy.isAlive() || enemy.isOffScreen(); }), enemies.end());
-
-        break;
-
-        }
-
-        
         draw();
     }
 }
@@ -550,7 +592,11 @@ void GameWindow::draw() {
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             player.draw();
             for (auto& enemy : enemies) {
+
                 enemy.draw();
+            }
+            for (auto& bullet : bullets) {
+                bullet.draw();
             }
             // Draw other game elements
             break;
@@ -1084,6 +1130,17 @@ void Player::init(float x, float y,const char* gifFile[2]) {
     }
     
 }
+
+float Player::getX() const{
+    return x;
+}
+
+float Player::getY() const{
+    return y;
+}
+
+
+
 
 void Player::update() {
 

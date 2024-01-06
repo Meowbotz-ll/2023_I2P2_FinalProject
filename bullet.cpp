@@ -3,7 +3,7 @@
 Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
 
 void Bullet::update() {
-    x += dx;
+    x += dx; // 假設 speed 是成員變量
     y += dy;
     // Added: Check if the bullet is out of screen bounds
     if (x < 0 || x > 800 || y < 0 || y > 600) {

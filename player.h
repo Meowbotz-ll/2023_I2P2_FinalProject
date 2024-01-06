@@ -23,6 +23,8 @@ public:
         return bullets;
     };  // 获取子弹的方法
     void markBulletDead(int index); // 添加一個新方法來標記特定子彈為不活動
+    float getX() const;
+    float getY() const;
     int getHp() const { return hp; } // Getter for player's health
     void hit(int damage); // Method to reduce player's health
 private:
