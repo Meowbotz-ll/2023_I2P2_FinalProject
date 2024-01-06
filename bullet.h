@@ -8,6 +8,7 @@ class Bullet {
 public:
     float x, y;
     float dx, dy;
+    float damage; // 子彈的傷害值
     static const int SIZE = 10;
     bool alive;
     bool isAlive() const{

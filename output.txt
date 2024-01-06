@@ -7,7 +7,7 @@ Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy
 void Bullet::update() {
     x += dx;
     y += dy;
-    // 檢查是否超出屏幕範圍
+    // Added: Check if the bullet is out of screen bounds
     if (x < 0 || x > 800 || y < 0 || y > 600) {
         alive = false;
     }
@@ -15,27 +15,27 @@ void Bullet::update() {
 
 void Bullet::draw() {
     al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
-}
-============== 
+}============== 
 File: .\enemy.cpp 
 -------------- 
 #include "Enemy.h"
 
 Enemy::Enemy(float x, float y, int initialHP) 
-    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)) {} // Blue color
+    : x(x), y(y), hp(initialHP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
 
 void Enemy::update() {
     // Update logic for enemy (optional for this example)
 }
 
 void Enemy::draw() {
-    al_draw_filled_circle(x, y, 20, color); // Drawing the enemy as a circle
+    if(!alive) return;
+    al_draw_filled_circle(x, y, RADIUS, color); // Drawing the enemy as a circle
 }
 
 void Enemy::hit(int damage) {
     hp -= damage;
-    if (hp > 0) {
-        color = al_map_rgb(0, 0, 200); // Change color to indicate damage
+    if (hp <= 0) {
+        alive = false; // 標記敵人為死亡，不再繪製或更新
     }
 }
 
@@ -224,6 +224,25 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
+        // 处理子弹和敌人的碰撞
+        for (auto& bullet : player.getBullets()) {
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(1);
+                }
+            }
+        }
+    
+
+        // 移除不活躍的子彈和敵人
+        /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                    [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
+                    [](const Enemy& enemy) { return !enemy.isAlive(); }), enemies.end());
+
+        break;
+
+        }
 
         draw();
     }
@@ -232,9 +251,42 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    player.draw();
+
+    switch (currentState) {
+        case MENU:
+            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            menu.draw();
+            break;
+
+        case GAME:
+            al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            player.draw();
+    for (auto& enemy : enemies) {
+        enemy.draw();
+    }
+            // Draw other game elements
+            break;
+    }
+
     al_flip_display();
 }
+bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
+    // Simple circle-rectangle collision detection
+    float distX = std::abs(bullet.x - enemy.x);
+    float distY = std::abs(bullet.y - enemy.y);
+
+    if (distX > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+    if (distY > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+
+    if (distX <= (Bullet::SIZE / 2)) { return true; } 
+    if (distY <= (Bullet::SIZE / 2)) { return true; }
+
+    // Corner collision
+    float dx = distX - Bullet::SIZE / 2;
+    float dy = distY - Bullet::SIZE / 2;
+    return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
+}
+
 ============== 
 File: .\global.cpp 
 -------------- 
