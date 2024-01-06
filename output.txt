@@ -7,21 +7,62 @@ Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy
 void Bullet::update() {
     x += dx;
     y += dy;
+    // 檢查是否超出屏幕範圍
+    if (x < 0 || x > 800 || y < 0 || y > 600) {
+        alive = false;
+    }
 }
 
 void Bullet::draw() {
     al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
 }
 ============== 
+File: .\enemy.cpp 
+-------------- 
+#include "Enemy.h"
+
+Enemy::Enemy(float x, float y, int initialHP) 
+    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)), alive(true) {} // 初始化alive为true // Blue color
+
+void Enemy::update() {
+    // Update logic for enemy (optional for this example)
+}
+
+void Enemy::draw() {
+    if(!alive) return;
+    al_draw_filled_circle(x, y, RADIUS, color); // Drawing the enemy as a circle
+}
+
+void Enemy::hit(int damage) {
+    hp -= damage;
+    if (hp <= 0) {
+        color = al_map_rgb(0, 0, 200); // Change color to indicate damage
+        alive = false; // 標記敵人為死亡，不再繪製或更新
+    }
+}
+
+bool Enemy::isAlive() const {
+    return hp > 0;
+}============== 
 File: .\gameWindow.cpp 
 -------------- 
 #include "gameWindow.h"
 #include "allegro_setup.h"
 #include "log.h"  // Include your log class
+#include "algorithm"
+#include "bullet.h"
+
+
+#include <iterator>
+using namespace std;
+
+bool checkCollision(const Bullet &bullet, const Enemy &enemy);
+
 
 GameWindow::GameWindow() : doexit(false) {
     Log::Info("GameWindow Created");
     init();
+    enemies.push_back(Enemy(100, 100, 10));
 }
 
 GameWindow::~GameWindow() {
@@ -105,6 +146,9 @@ void GameWindow::run() {
         switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
                 player.update();
+                for (auto& enemy : enemies) {
+                    enemy.update();
+                }
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -132,6 +176,22 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
+        // 处理子弹和敌人的碰撞
+        for (auto& bullet : player.getBullets()) {
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(1);
+                }
+            }
+        }
+    
+
+        // 移除不活躍的子彈和敵人
+        /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                    [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
+                    [](const Enemy& enemy) { return !enemy.isAlive(); }), enemies.end());
+
 
         draw();
     }
@@ -141,8 +201,29 @@ void GameWindow::run() {
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
     player.draw();
+    for (auto& enemy : enemies) {
+        enemy.draw();
+    }
     al_flip_display();
 }
+
+bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
+    // Simple circle-rectangle collision detection
+    float distX = std::abs(bullet.x - enemy.x);
+    float distY = std::abs(bullet.y - enemy.y);
+
+    if (distX > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+    if (distY > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+
+    if (distX <= (Bullet::SIZE / 2)) { return true; } 
+    if (distY <= (Bullet::SIZE / 2)) { return true; }
+
+    // Corner collision
+    float dx = distX - Bullet::SIZE / 2;
+    float dy = distY - Bullet::SIZE / 2;
+    return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
+}
+
 ============== 
 File: .\global.cpp 
 -------------- 
@@ -203,6 +284,7 @@ File: .\player.cpp
 #include "bullet.h"
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 std::vector<Bullet> bullets;
 const float GRAVITY = 0.5;
@@ -247,6 +329,9 @@ void Player::update() {
     for (auto& bullet : bullets) {
         bullet.update();
     }
+    // 移除不活跃的子弹
+    bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
 }
 
 void Player::draw() {
@@ -269,6 +354,10 @@ void Player::shoot(float target_x, float target_y) {
     dy *= bulletSpeed;
 
     bullets.push_back(Bullet(x, y, dx, dy));
+}
+
+std::vector<Bullet>& Player::getBullets() {
+    return bullets;
 }
 
 ============== 

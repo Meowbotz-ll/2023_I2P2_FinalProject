@@ -3,6 +3,7 @@
 #include "bullet.h"
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 std::vector<Bullet> bullets;
 const float GRAVITY = 0.5;
@@ -47,6 +48,9 @@ void Player::update() {
     for (auto& bullet : bullets) {
         bullet.update();
     }
+    // 移除不活跃的子弹
+    bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
 }
 
 void Player::draw() {
@@ -69,5 +73,9 @@ void Player::shoot(float target_x, float target_y) {
     dy *= bulletSpeed;
 
     bullets.push_back(Bullet(x, y, dx, dy));
+}
+
+std::vector<Bullet>& Player::getBullets() {
+    return bullets;
 }
 

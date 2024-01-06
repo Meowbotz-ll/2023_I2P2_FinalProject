@@ -1,10 +1,20 @@
 #include "gameWindow.h"
 #include "allegro_setup.h"
 #include "log.h"  // Include your log class
+#include "algorithm"
+#include "bullet.h"
+
+
+#include <iterator>
+using namespace std;
+
+bool checkCollision(const Bullet &bullet, const Enemy &enemy);
+
 
 GameWindow::GameWindow() : doexit(false) {
     Log::Info("GameWindow Created");
     init();
+    enemies.push_back(Enemy(100, 100, 10));
 }
 
 GameWindow::~GameWindow() {
@@ -88,6 +98,9 @@ void GameWindow::run() {
         switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
                 player.update();
+                for (auto& enemy : enemies) {
+                    enemy.update();
+                }
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -115,6 +128,22 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
+        // 处理子弹和敌人的碰撞
+        for (auto& bullet : player.getBullets()) {
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(1);
+                }
+            }
+        }
+    
+
+        // 移除不活躍的子彈和敵人
+        /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                    [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
+                    [](const Enemy& enemy) { return !enemy.isAlive(); }), enemies.end());
+
 
         draw();
     }
@@ -124,5 +153,26 @@ void GameWindow::run() {
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
     player.draw();
+    for (auto& enemy : enemies) {
+        enemy.draw();
+    }
     al_flip_display();
 }
+
+bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
+    // Simple circle-rectangle collision detection
+    float distX = std::abs(bullet.x - enemy.x);
+    float distY = std::abs(bullet.y - enemy.y);
+
+    if (distX > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+    if (distY > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+
+    if (distX <= (Bullet::SIZE / 2)) { return true; } 
+    if (distY <= (Bullet::SIZE / 2)) { return true; }
+
+    // Corner collision
+    float dx = distX - Bullet::SIZE / 2;
+    float dy = distY - Bullet::SIZE / 2;
+    return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
+}
+
