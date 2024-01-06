@@ -186,7 +186,7 @@ void GameWindow::draw() {
             break;
 
         case GAME:
-            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             player.draw();
             // Draw other game elements
             break;
