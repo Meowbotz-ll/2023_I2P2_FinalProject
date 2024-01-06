@@ -14,6 +14,9 @@ private:
     float x, y, dy;
     bool onGround, facingRight;
     float bulletSpeed;
+    bool dashing;
+    float lastDashTime;
+    const float DASH_COOLDOWN = 4.0; // 4-second cooldown
 };
 
 #endif // PLAYER_H

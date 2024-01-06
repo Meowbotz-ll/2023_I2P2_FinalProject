@@ -9,7 +9,7 @@ const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 
-Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f) {
+Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0){
 }
 
 void Player::init(float x, float y) {
@@ -41,6 +41,25 @@ void Player::update() {
     if (key_state[ALLEGRO_KEY_SPACE] && onGround) {
         dy = JUMP_STRENGTH;
         onGround = false;
+    }
+
+    if (key_state[ALLEGRO_KEY_F] && !dashing) {
+        // Implement dash behavior here
+        if(facingRight)
+        {
+        x += 20.0;
+        }
+        else if(!facingRight)
+        {
+        x-=20.0;
+        }
+        dashing = false;
+        lastDashTime = al_get_time(); // Record the time of the dash
+    }
+
+        // Check if the cooldown is over and reset the dash flag
+    if (al_get_time() - lastDashTime >= DASH_COOLDOWN) {
+        dashing = false;
     }
 
     // Update bullets
