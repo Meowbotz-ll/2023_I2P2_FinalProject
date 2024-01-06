@@ -30,7 +30,7 @@ public:
     void shootAtPlayer(const Player &player);
     EnemyType getType() const; // 新的成员函数
     void drawBullets();
-    const std::vector<Bullet>& getBullets() const{
+    std::vector<Bullet>& getBullets(){
         return bullets;
     };  // 获取子弹的方法
     void removeInactiveBullets();

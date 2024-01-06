@@ -560,38 +560,11 @@ void GameWindow::run() {
                 player.update();
                 // 遍历所有敌人
                 for (auto& enemy : enemies) {
-                    enemy.update(); // 更新敌人位置和状态
-                    enemy.removeInactiveBullets();
-                    // 如果敌人是天空中的敌人，则射击玩家
-                    if (enemy.getType() == EnemyType::AIR) {
-                        enemy.shootAtPlayer(player); // 让敌人射击玩家
-                    }
+                    enemy.update();
                 }
-
-                // 将死亡或离开屏幕的敌人的子弹转移到全局子弹列表
-                /*for (auto& enemy : enemies) {
-                    if (!enemy.isAlive() || enemy.isOffScreen()) {
-                        const auto& enemyBullets = enemy.getBullets();
-                        bullets.insert(bullets.end(), enemyBullets.begin(), enemyBullets.end());
-                        enemy.clearBullets(); // 清空敵人的子彈列表
-                    }
-                }*/
-
-                // 移除不再存活或已经离开屏幕的敌人
-                enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-                    [](const Enemy& enemy) {
-                        return !enemy.isAlive() || enemy.isOffScreen();
-                    }), enemies.end());
-
-                 // 更新全局子弹列表
-                for (auto& bullet : bullets) {
-                    bullet.update();
-                }
-                // 移除不活跃的子弹
-                /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
-                    [](const Bullet& b) { return !b.isAlive(); }), bullets.end());*/
-                
-                if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+                // 生成新敌人的代码
+                static double last_spawn_time = 0;
+                if (al_get_time() - last_spawn_time > 2.0) { // 每2秒生成一个敌人
                     last_spawn_time = al_get_time();
                     float spawnY;
                     float velocityX;
