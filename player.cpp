@@ -10,7 +10,7 @@ const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 
-Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0){
+Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0),currentWeapon(PISTOL){
     for (int i = 0; i < 4; ++i) {
         walkingGif[i] = nullptr;
     }
@@ -37,6 +37,20 @@ void Player::init(float x, float y,const char* gifFile[2]) {
 }
 
 void Player::update() {
+
+    if (key_state[ALLEGRO_KEY_1]) {
+        currentWeapon = PISTOL;
+        Log::Info("Weapon change to pistol");
+    }
+    if (key_state[ALLEGRO_KEY_2]) {
+        currentWeapon = SHOTGUN;
+        Log::Info("Weapon change to shotgun");
+    }
+    if (key_state[ALLEGRO_KEY_3]) {
+        currentWeapon = BAZOOKA;
+        Log::Info("Weapon change to bazooka");
+    }
+
     if (!onGround) {
         dy += GRAVITY;
         y += dy;
@@ -119,12 +133,38 @@ void Player::shoot(float target_x, float target_y) {
     float length = std::sqrt(dx * dx + dy * dy);
     dx /= length; // Normalize
     dy /= length;
-    
-    // Use bulletSpeed to determine the velocity of the bullet
+
     dx *= bulletSpeed;
     dy *= bulletSpeed;
 
-    bullets.push_back(Bullet(x, y, dx, dy));
+    switch (currentWeapon) {
+        case PISTOL: {
+            Bullet newBullet(x, y, dx, dy);
+            newBullet.setDamage(2);
+            newBullet.setSize(10);
+            bullets.push_back(newBullet);
+            break;
+        }
+        case SHOTGUN: {
+            for (int i = 0; i < 3; ++i) {
+                float angle = i * 0.1f - 0.1f; // Adjust angle for each bullet
+                float newDx = dx * std::cos(angle) - dy * std::sin(angle);
+                float newDy = dy * std::cos(angle) + dx * std::sin(angle);
+                Bullet newBullet(x, y, newDx, newDy);
+                newBullet.setSize(20);
+                newBullet.setDamage(1);
+                bullets.push_back(newBullet);
+            }
+            break;
+        }
+        case BAZOOKA: {
+            Bullet bazookaBullet(x, y, dx, dy);
+            bazookaBullet.setSize(50); // Adjusted size for the bazooka bullet
+            bazookaBullet.setDamage(100);
+            bullets.push_back(bazookaBullet);
+            break;
+        }
+    }
 }
 
 void Player::markBulletDead(int index) {
@@ -136,7 +176,4 @@ void Player::markBulletDead(int index) {
         bullets[unsignedIndex].setAlive(false);
     }
 }
-
-
-
 

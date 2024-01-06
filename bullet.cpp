@@ -1,7 +1,5 @@
 #include "bullet.h"
 
-int Bullet::DEFAULT_DAMAGE = 2; // 初始化静态成员变量
-
 Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
 
 void Bullet::update() {
@@ -15,7 +13,7 @@ void Bullet::update() {
 
 void Bullet::draw() {
     if(!alive) return;
-    al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
+    al_draw_filled_rectangle(x, y, x + size, y + size, al_map_rgb(255, 255, 255));
 }
 
 void Bullet::setAlive(bool status) {

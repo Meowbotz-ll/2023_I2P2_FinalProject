@@ -7,7 +7,7 @@
 #include <iterator>
 using namespace std;
 
-GameWindow::GameWindow() : currentState(MENU),doexit(false){
+GameWindow::GameWindow() : currentState(MENU),backgroundImage(nullptr),doexit(false){
     Log::Info("GameWindow Created");
     init();
     enemies.push_back(Enemy(100, 100));
@@ -19,6 +19,9 @@ GameWindow::~GameWindow() {
     al_destroy_event_queue(event_queue);
     if (ui_font) {
         al_destroy_font(ui_font);
+    }
+    if (backgroundImage) {
+        al_destroy_bitmap(backgroundImage);
     }
 }
 
@@ -76,6 +79,12 @@ void GameWindow::init() {
     }
     if (!al_reserve_samples(16)) {  // Reserve enough sample instances for your game
         Log::Error("Failed to reserve audio samples");
+        return;
+    }
+    // Load background image
+    backgroundImage = al_load_bitmap("img/bg.jpeg");
+    if (!backgroundImage) {
+        Log::Error("Failed to load background image");
         return;
     }
     // Init background Music
@@ -202,9 +211,10 @@ void GameWindow::run() {
 
             for (auto& enemy : enemies) {
                 if (checkCollision(bullet, enemy) && enemy.isAlive()) {
-                    enemy.hit(Bullet::DEFAULT_DAMAGE);
+                    enemy.hit(bullet.getDamage());
                     bullet.setHit(true); // 标记子弹已经击中敌人
                     bullet.setAlive(false); // 设置子弹为不活跃
+                    if(enemy.hp<=0){score++;}
                     break; // 退出内部循环
                 }
             }
@@ -224,6 +234,8 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
+    // Draw the background image first
+    
 
     switch (currentState) {
         case MENU:
@@ -232,7 +244,13 @@ void GameWindow::draw() {
             break;
 
         case GAME:
-currentTime = static_cast<int>(al_get_time() - startTime);
+            if(drawInit)
+            {
+            //al_draw_bitmap(backgroundImage, 0, 0, 0);
+            Log::Info("Background Init");
+            drawInit=false;
+            }
+            currentTime = static_cast<int>(al_get_time() - startTime);
 
             std::ostringstream timeStream;
             timeStream.precision(0); // Set precision to 0 to avoid any decimals
@@ -260,15 +278,15 @@ bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
     float distX = std::abs(bullet.x - enemy.x);
     float distY = std::abs(bullet.y - enemy.y);
 
-    if (distX > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
-    if (distY > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+    if (distX > (bullet.getSize()/ 2 + Enemy::RADIUS)) { return false; }
+    if (distY > (bullet.getSize()/ 2 + Enemy::RADIUS)) { return false; }
 
-    if (distX <= (Bullet::SIZE / 2)) { return true; } 
-    if (distY <= (Bullet::SIZE / 2)) { return true; }
+    if (distX <= (bullet.getSize()/ 2)) { return true; } 
+    if (distY <= (bullet.getSize()/ 2)) { return true; }
 
     // Corner collision
-    float dx = distX - Bullet::SIZE / 2;
-    float dy = distY - Bullet::SIZE / 2;
+    float dx = distX - bullet.getSize()/ 2;
+    float dy = distY - bullet.getSize()/ 2;
     return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
 }
 

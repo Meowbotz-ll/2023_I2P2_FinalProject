@@ -5,6 +5,12 @@
 #include "bullet.h"
 #include <vector>
 
+enum WeaponType {
+        PISTOL,
+        SHOTGUN,
+        BAZOOKA
+    };
+
 class Player {
 public:
     ~Player();
@@ -27,6 +33,7 @@ private:
     float lastDashTime;
     const float DASH_COOLDOWN = 4.0; // 4-second cooldown
     ALGIF_ANIMATION *walkingGif[2];
+    WeaponType currentWeapon;
     
 };
 

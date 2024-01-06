@@ -2,10 +2,12 @@
 #define ENEMY_H
 
 #include "allegro_setup.h"
+
+const int DEFAULT_HP=7;
 class Enemy {
 public:
     float x, y;
-    static int DEFAULT_HP;  // 默认的敌人生命值
+    int hp;  // 默认的敌人生命值
     Enemy(float x, float y);
     void update();
     void draw();
@@ -14,7 +16,6 @@ public:
     static const int RADIUS = 10;
 
 private:
-    int hp;
     ALLEGRO_COLOR color;
     bool alive;
 };

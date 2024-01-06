@@ -37,13 +37,15 @@ private:
     ALLEGRO_FONT* font;
     ALLEGRO_SAMPLE *menuMusic;
     ALLEGRO_SAMPLE *gameMusic;
+    ALLEGRO_BITMAP *backgroundImage;
     Menu menu;
     bool doexit;
     void update();
     ALLEGRO_FONT* ui_font; // Font for drawing UI text
-    int score;             // Player's current score
+    int score=0;             // Player's current score
     double startTime;      // Time when the game started
     double currentTime;    // Current game time
+    bool drawInit=true;
     
 };
 
