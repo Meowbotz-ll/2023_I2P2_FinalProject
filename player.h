@@ -23,6 +23,8 @@ public:
         return bullets;
     };  // 获取子弹的方法
     void markBulletDead(int index); // 添加一個新方法來標記特定子彈為不活動
+    int getHp() const { return hp; } // Getter for player's health
+    void hit(int damage); // Method to reduce player's health
 private:
     float x, y, dy;
     bool onGround, facingRight;
@@ -34,7 +36,7 @@ private:
     const float DASH_COOLDOWN = 4.0; // 4-second cooldown
     ALGIF_ANIMATION *walkingGif[2];
     WeaponType currentWeapon;
-    
+    int hp; // Player's health points
 };
 
 

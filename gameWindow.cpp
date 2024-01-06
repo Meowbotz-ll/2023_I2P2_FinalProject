@@ -274,6 +274,24 @@ void GameWindow::draw() {
             std::string timeText = timeStream.str();
 
             std::string scoreText = "Score: " + std::to_string(score);
+            // Draw Health Bar
+            const int maxHealthWidth = 750; // Maximum width of the health bar
+            int currentHealthWidth = static_cast<int>((player.getHp() / 100) * maxHealthWidth);
+            al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0)); // Draw health bar at the bottom
+
+            //debug Health bar
+            const int healthBarHeight = 20;  // Height of the health bar
+            const int healthBarYPosition = 600 - 50;  // Y position of the health bar from the bottom of the screen
+            const int healthBarXPosition = 20;  // X position of the health bar from the left of the screen
+
+            // Drawing a full HP bar for debugging
+            al_draw_filled_rectangle(
+                healthBarXPosition, 
+                healthBarYPosition, 
+                healthBarXPosition + maxHealthWidth, 
+                healthBarYPosition + healthBarHeight, 
+                al_map_rgb(0, 255, 0)  // Green color for full health
+            );
 
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());

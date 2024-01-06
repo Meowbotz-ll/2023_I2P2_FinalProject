@@ -9,8 +9,9 @@
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
+const int INITIAL_HP = 100; // Initial health points
 
-Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0),currentWeapon(PISTOL){
+Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0),currentWeapon(PISTOL),hp(INITIAL_HP){
     for (int i = 0; i < 4; ++i) {
         walkingGif[i] = nullptr;
     }
@@ -177,3 +178,10 @@ void Player::markBulletDead(int index) {
     }
 }
 
+void Player::hit(int damage) {
+    hp -= damage;
+    if (hp < 0) {
+        hp = 0;
+    }
+    // Additional logic when player's health reaches 0
+}
