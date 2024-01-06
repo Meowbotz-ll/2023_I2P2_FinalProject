@@ -211,9 +211,9 @@ File: .\bullet.cpp
 -------------- 
 #include "bullet.h"
 
-int Bullet::DEFAULT_DAMAGE = 1; // 初始化静态成员变量
+int Bullet::DEFAULT_DAMAGE = 2; // 初始化静态成员变量
 
-Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE) {}
+Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
 
 void Bullet::update() {
     x += dx;
@@ -228,16 +228,31 @@ void Bullet::draw() {
     if(!alive) return;
     al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
 }
+
+void Bullet::setAlive(bool status) {
+    alive = status;
+}
 ============== 
 File: .\enemy.cpp 
 -------------- 
 #include "Enemy.h"
 
-Enemy::Enemy(float x, float y, int initialHP) 
-    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)) {} // Blue color
+int Enemy::DEFAULT_HP = 7;  // 初始化静态成员变量
+
+//Enemy::Enemy(float x, float y) 
+//    : x(x), y(y), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
+
+Enemy::Enemy(float x, float y, float vx) 
+    : x(x), y(y), vx(vx), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false) {}
 
 void Enemy::update() {
-    // Update logic for enemy (optional for this example)
+    x += vx;
+
+    // 检查是否离开屏幕
+    if (x < 0 || x > 800) {  // 假设屏幕宽度为800
+        offScreen = true;
+    }
+    
 }
 
 void Enemy::draw() {
@@ -269,13 +284,16 @@ using namespace std;
 GameWindow::GameWindow() : currentState(MENU),doexit(false){
     Log::Info("GameWindow Created");
     init();
-    enemies.push_back(Enemy(100, 100));
+    enemies.push_back(Enemy(100, 100, 0.5));
 }
 
 GameWindow::~GameWindow() {
     Log::Info("GameWindow Deleted");
     al_destroy_display(display);
     al_destroy_event_queue(event_queue);
+    if (ui_font) {
+        al_destroy_font(ui_font);
+    }
 }
 
 void GameWindow::init() {
@@ -315,6 +333,12 @@ void GameWindow::init() {
         Log::Error("Failed to load font at fonts/ARCADE.TTF");
     }
     menu.init(font);
+    //ui font
+    ui_font = al_load_font("fonts/ARCADE.TTF", 24, 0); // Load a font
+    if (!ui_font) {
+        Log::Error("Failed to load UI font");
+    }
+    startTime = al_get_time(); // Record the start time
 // Initialize audio subsystem
     if (!al_install_audio()) {
         Log::Error("Failed to initialize audio");
@@ -329,8 +353,8 @@ void GameWindow::init() {
         return;
     }
     // Init background Music
-    menuMusic = al_load_sample("audio/Electroman-Adventures.ogg");
-    gameMusic = al_load_sample("audio/Electroman-Adventures.ogg");
+    menuMusic = al_load_sample("audio/Electroman-Adventures.mp3");
+    gameMusic = al_load_sample("audio/Electroman-Adventures.mp3");
 
 const char* playerGifFiles[2] = {
         "player_img/skeleton_left.gif",   // Replace with actual file path
@@ -415,6 +439,15 @@ void GameWindow::run() {
                 for (auto& enemy : enemies) {
                     enemy.update();
                 }
+                // 生成新敌人的代码
+                static double last_spawn_time = 0;
+                if (al_get_time() - last_spawn_time > 2.0) { // 每2秒生成一个敌人
+                    last_spawn_time = al_get_time();
+                    float spawnY = static_cast<float>(rand() % 600); // 在屏幕高度范围内随机生成垂直位置
+                    float spawnX = -1; // 在屏幕左侧外生成敌人
+                    float velocityX = 1.0; // 向右移动的速度
+                    enemies.push_back(Enemy(spawnX, spawnY, velocityX));
+                }
                 
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -446,6 +479,31 @@ void GameWindow::run() {
             // Add additional cases here for other types of events
         }
 
+        
+
+
+        for (auto& bullet : player.getBullets()) {
+            if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
+
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(Bullet::DEFAULT_DAMAGE);
+                    bullet.setHit(true); // 标记子弹已经击中敌人
+                    bullet.setAlive(false); // 设置子弹为不活跃
+                    break; // 退出内部循环
+                }
+            }
+        }
+
+        // 移除已不活动的敌人
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
+                   [](const Enemy& enemy) { return !enemy.isAlive() || enemy.isOffScreen(); }), enemies.end());
+
+        break;
+
+        }
+
+        
         draw();
     }
 }
@@ -461,16 +519,280 @@ void GameWindow::draw() {
             break;
 
         case GAME:
+            currentTime = static_cast<int>(al_get_time() - startTime);
+
+            std::ostringstream timeStream;
+            timeStream.precision(0); // Set precision to 0 to avoid any decimals
+            timeStream << "Time: " << currentTime;
+            std::string timeText = timeStream.str();
+
+            std::string scoreText = "Score: " + std::to_string(score);
+
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
+            
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             player.draw();
-    for (auto& enemy : enemies) {
-        enemy.draw();
-    }
+            for (auto& enemy : enemies) {
+                enemy.draw();
+            }
             // Draw other game elements
             break;
     }
 
     al_flip_display();
+}
+bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
+    // Simple circle-rectangle collision detection
+    float distX = std::abs(bullet.x - enemy.x);
+    float distY = std::abs(bullet.y - enemy.y);
+
+    if (distX > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+    if (distY > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+
+    if (distX <= (Bullet::SIZE / 2)) { return true; } 
+    if (distY <= (Bullet::SIZE / 2)) { return true; }
+
+    // Corner collision
+    float dx = distX - Bullet::SIZE / 2;
+    float dy = distY - Bullet::SIZE / 2;
+    return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
+}
+
+============== 
+File: .\gif.cpp 
+-------------- 
+#include "algif.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+int LZW_decode (ALLEGRO_FILE * file, ALGIF_BITMAP *bmp);
+
+/* Destroy a complete gif, including all frames. */
+void algif_destroy_animation(ALGIF_ANIMATION *gif) {
+    int i;
+
+    for (i = 0; i < gif->frames_count; i++)
+    {
+        ALGIF_FRAME *frame = gif->frames + i;
+
+        if (frame->bitmap_8_bit)
+            algif_destroy_bitmap (frame->bitmap_8_bit);
+        if (frame->rendered)
+            al_destroy_bitmap(frame->rendered);
+    }
+    if (gif->store)
+        al_destroy_bitmap(gif->store);
+    free (gif->frames);
+    free (gif);
+}
+
+static void read_palette (ALLEGRO_FILE * file, ALGIF_PALETTE *palette) {
+    int i;
+
+    for (i = 0; i < palette->colors_count; i++)
+    {
+        palette->colors[i].r = al_fgetc (file);
+        palette->colors[i].g = al_fgetc (file);
+        palette->colors[i].b = al_fgetc (file);
+    }
+}
+
+static void deinterlace (ALGIF_BITMAP *bmp)
+{
+    ALGIF_BITMAP *n = algif_create_bitmap (bmp->w, bmp->h);
+    int y, i = 0;
+    for (y = 0; y < n->h; y += 8)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    for (y = 4; y < n->h; y += 8)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    for (y = 2; y < n->h; y += 4)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    for (y = 1; y < n->h; y += 2)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    algif_blit (n, bmp, 0, 0, 0, 0, n->w, n->h);
+    algif_destroy_bitmap (n);
+}
+
+ALGIF_ANIMATION *algif_load_raw(ALLEGRO_FILE *file) {
+    if (!file)
+        return NULL;
+
+    int version;
+    ALGIF_BITMAP *bmp = NULL;
+    int i, j;
+    ALGIF_ANIMATION *gif = (ALGIF_ANIMATION *)calloc (1, sizeof *gif);
+    ALGIF_FRAME frame;
+    gif->frames_count = 0;
+
+    /* is it really a GIF? */
+    if (al_fgetc (file) != 'G')
+        goto error;
+    if (al_fgetc (file) != 'I')
+        goto error;
+    if (al_fgetc (file) != 'F')
+        goto error;
+    if (al_fgetc (file) != '8')
+        goto error;
+    /* '7' or '9', for 87a or 89a. */
+    version = al_fgetc (file);
+    if (version != '7' && version != '9')
+        goto error;
+    if (al_fgetc (file) != 'a')
+        goto error;
+
+    gif->width = al_fread16le (file);
+    gif->height = al_fread16le (file);
+    i = al_fgetc (file);
+    /* Global color table? */
+    if (i & 128)
+        gif->palette.colors_count = 1 << ((i & 7) + 1);
+    else
+        gif->palette.colors_count = 0;
+    /* Background color is only valid with a global palette. */
+    gif->background_index = al_fgetc (file);
+
+    /* Skip aspect ratio. */
+    al_fseek (file, 1, ALLEGRO_SEEK_CUR);
+
+    if (gif->palette.colors_count)
+    {
+        read_palette (file, &gif->palette);
+    }
+
+    memset(&frame, 0, sizeof frame); /* For first frame. */
+    frame.transparent_index = -1;
+
+    do
+    {
+        i = al_fgetc (file);
+
+        switch (i)
+        {
+            case 0x2c:         /* Image Descriptor */
+            {
+                int w, h;
+                int interlaced = 0;
+
+                frame.xoff = al_fread16le (file);
+                frame.yoff = al_fread16le (file);
+                w = al_fread16le (file);
+                h = al_fread16le (file);
+                bmp = algif_create_bitmap (w, h);
+                if (!bmp)
+                    goto error;
+                i = al_fgetc (file);
+
+                /* Local palette. */
+                if (i & 128)
+                {
+                    frame.palette.colors_count = 1 << ((i & 7) + 1);
+                    read_palette (file, &frame.palette);
+                }
+                else
+                {
+                    frame.palette.colors_count = 0;
+                }
+
+                if (i & 64)
+                    interlaced = 1;
+
+                if (LZW_decode (file, bmp))
+                    goto error;
+
+                if (interlaced)
+                    deinterlace (bmp);
+
+                frame.bitmap_8_bit = bmp;
+                bmp = NULL;
+
+                gif->frames_count++;
+                gif->frames =
+                    (ALGIF_FRAME*)realloc (gif->frames,
+                             gif->frames_count * sizeof *gif->frames);
+                gif->frames[gif->frames_count - 1] = frame;
+
+                memset(&frame, 0, sizeof frame); /* For next frame. */
+                frame.transparent_index = -1;
+
+                break;
+            }
+            case 0x21: /* Extension Introducer. */
+                j = al_fgetc (file); /* Extension Type. */
+                i = al_fgetc (file); /* Size. */
+                if (j == 0xf9) /* Graphic Control Extension. */
+                {
+                    /* size must be 4 */
+                    if (i != 4)
+                        goto error;
+                    i = al_fgetc (file);
+                    frame.disposal_method = (i >> 2) & 7;
+                    frame.duration = al_fread16le (file);
+                    if (i & 1)  /* Transparency? */
+                    {
+                        frame.transparent_index = al_fgetc (file);
+                    }
+                    else
+                    {
+                        al_fseek (file, 1, ALLEGRO_SEEK_CUR);
+                        frame.transparent_index = -1;
+                    }
+                    i = al_fgetc (file); /* Size. */
+                }
+                /* Application Extension. */
+                else if (j == 0xff)
+                {
+                    if (i == 11)
+                    {
+                        char name[12];
+                        al_fread (file, name, 11);
+                        i = al_fgetc (file); /* Size. */
+                        name[11] = '\0';
+                        if (!strcmp (name, "NETSCAPE2.0"))
+                        {
+                            if (i == 3)
+                            {
+                                j = al_fgetc (file);
+                                gif->loop = al_fread16le (file);
+                                if (j != 1)
+                                    gif->loop = 0;
+                                i = al_fgetc (file); /* Size. */
+                            }
+                        }
+                    }
+                }
+
+                /* Possibly more blocks until terminator block (0). */
+                while (i)
+                {
+                    al_fseek (file, i, ALLEGRO_SEEK_CUR);
+                    i = al_fgetc (file);
+                }
+                break;
+            case 0x3b:
+                /* GIF Trailer. */
+                al_fclose (file);
+                return gif;
+        }
+    }
+    while (true);
+  error:
+    if (file)
+        al_fclose (file);
+    if (gif)
+        algif_destroy_animation (gif);
+    if (bmp)
+        algif_destroy_bitmap (bmp);
+    return NULL;
 }
 ============== 
 File: .\global.cpp 
@@ -797,12 +1119,7 @@ void Player::update() {
     for (auto& bullet : bullets) {
         bullet.update();
     }
-    // 移除不活跃的子弹
-    /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
-                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
-    // 移除不活動的子彈
-    /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
-                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+
 
 }
 
@@ -841,12 +1158,6 @@ void Player::shoot(float target_x, float target_y) {
 
     bullets.push_back(Bullet(x, y, dx, dy));
 }
-
-/*void Player::markBulletDead(int index) {
-    if (index >= 0 && index < bullets.size()) {
-        bullets[index].alive = false;
-    }
-}*/
 
 void Player::markBulletDead(int index) {
     // 将 index 转换为无符号类型

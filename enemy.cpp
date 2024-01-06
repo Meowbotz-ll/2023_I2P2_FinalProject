@@ -2,11 +2,20 @@
 
 int Enemy::DEFAULT_HP = 7;  // 初始化静态成员变量
 
-Enemy::Enemy(float x, float y) 
-    : x(x), y(y), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
+//Enemy::Enemy(float x, float y) 
+//    : x(x), y(y), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
+
+Enemy::Enemy(float x, float y, float vx) 
+    : x(x), y(y), vx(vx), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false) {}
 
 void Enemy::update() {
-    // Update logic for enemy (optional for this example)
+    x += vx;
+
+    // 检查是否离开屏幕
+    if (x < 0 || x > 800) {  // 假设屏幕宽度为800
+        offScreen = true;
+    }
+    
 }
 
 void Enemy::draw() {
