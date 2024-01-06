@@ -1,2 +1,4 @@
 allegro.log
 .vscode
+*.o
+game.exe
