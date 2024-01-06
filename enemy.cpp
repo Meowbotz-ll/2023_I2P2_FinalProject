@@ -2,7 +2,8 @@
 
 
 Enemy::Enemy(float x, float y, float vx) 
-    : x(x), y(y), vx(vx), hp(DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false) {}
+    : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false) {}
+
 
 void Enemy::update() {
     x += vx;
