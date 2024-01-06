@@ -3,8 +3,9 @@
 #include "bullet.h"
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
-std::vector<Bullet> bullets;
+
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
@@ -66,7 +67,7 @@ void Player::update() {
     for (auto& bullet : bullets) {
         bullet.update();
     }
-      // 移除不活跃的子弹
+    // 移除不活跃的子弹
     /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
                 [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
 }
@@ -92,4 +93,6 @@ void Player::shoot(float target_x, float target_y) {
 
     bullets.push_back(Bullet(x, y, dx, dy));
 }
+
+
 

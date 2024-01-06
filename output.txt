@@ -7,6 +7,10 @@ Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy
 void Bullet::update() {
     x += dx;
     y += dy;
+    // 檢查是否超出屏幕範圍
+    if (x < 0 || x > 800 || y < 0 || y > 600) {
+        alive = false;
+    }
 }
 
 void Bullet::draw() {
@@ -43,10 +47,17 @@ File: .\gameWindow.cpp
 #include "gameWindow.h"
 #include "allegro_setup.h"
 #include "log.h"  // Include your log class
+#include "algorithm"
+#include "bullet.h"
+
+
+#include <iterator>
+using namespace std;
 
 GameWindow::GameWindow() : currentState(MENU),doexit(false){
     Log::Info("GameWindow Created");
     init();
+    enemies.push_back(Enemy(100, 100, 10));
 }
 
 GameWindow::~GameWindow() {
@@ -180,6 +191,10 @@ void GameWindow::run() {
             case ALLEGRO_EVENT_TIMER:
             
                 player.update();
+                for (auto& enemy : enemies) {
+                    enemy.update();
+                }
+                
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -209,9 +224,6 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
-        break;
-
-        }
 
         draw();
     }
@@ -220,22 +232,10 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-
-    switch (currentState) {
-        case MENU:
-            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
-            menu.draw();
-            break;
-
-        case GAME:
-            al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
-            player.draw();
-            // Draw other game elements
-            break;
-    }
-
+    player.draw();
     al_flip_display();
-}============== 
+}
+============== 
 File: .\global.cpp 
 -------------- 
 #include "global.h"
@@ -328,8 +328,9 @@ File: .\player.cpp
 #include "bullet.h"
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
-std::vector<Bullet> bullets;
+
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
@@ -391,6 +392,9 @@ void Player::update() {
     for (auto& bullet : bullets) {
         bullet.update();
     }
+    // 移除不活跃的子弹
+    /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
 }
 
 void Player::draw() {
@@ -414,5 +418,7 @@ void Player::shoot(float target_x, float target_y) {
 
     bullets.push_back(Bullet(x, y, dx, dy));
 }
+
+
 
 ============== 
