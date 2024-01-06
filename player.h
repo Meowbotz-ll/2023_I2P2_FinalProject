@@ -12,7 +12,9 @@ public:
     void update();
     void draw();
     void shoot(float target_x, float target_y);
-    std::vector<Bullet>& getBullets();  // 获取子弹的方法
+    const std::vector<Bullet>& getBullets() const{
+        return bullets;
+    };  // 获取子弹的方法
 private:
     float x, y, dy;
     bool onGround, facingRight;

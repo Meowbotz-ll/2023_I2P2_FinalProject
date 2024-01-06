@@ -8,9 +8,6 @@
 #include <iterator>
 using namespace std;
 
-bool checkCollision(const Bullet &bullet, const Enemy &enemy);
-
-
 GameWindow::GameWindow() : doexit(false) {
     Log::Info("GameWindow Created");
     init();
@@ -101,6 +98,7 @@ void GameWindow::run() {
                 for (auto& enemy : enemies) {
                     enemy.update();
                 }
+                
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 

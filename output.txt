@@ -22,7 +22,7 @@ File: .\enemy.cpp
 #include "Enemy.h"
 
 Enemy::Enemy(float x, float y, int initialHP) 
-    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)), alive(true) {} // 初始化alive为true // Blue color
+    : x(x), y(y), hp(initialHP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
 
 void Enemy::update() {
     // Update logic for enemy (optional for this example)
@@ -36,7 +36,6 @@ void Enemy::draw() {
 void Enemy::hit(int damage) {
     hp -= damage;
     if (hp <= 0) {
-        color = al_map_rgb(0, 0, 200); // Change color to indicate damage
         alive = false; // 標記敵人為死亡，不再繪製或更新
     }
 }
@@ -55,9 +54,6 @@ File: .\gameWindow.cpp
 
 #include <iterator>
 using namespace std;
-
-bool checkCollision(const Bullet &bullet, const Enemy &enemy);
-
 
 GameWindow::GameWindow() : doexit(false) {
     Log::Info("GameWindow Created");
@@ -149,6 +145,7 @@ void GameWindow::run() {
                 for (auto& enemy : enemies) {
                     enemy.update();
                 }
+                
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -286,7 +283,7 @@ File: .\player.cpp
 #include <cmath>
 #include <algorithm>
 
-std::vector<Bullet> bullets;
+
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
@@ -330,8 +327,8 @@ void Player::update() {
         bullet.update();
     }
     // 移除不活跃的子弹
-    bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
-                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());
+    /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
 }
 
 void Player::draw() {
@@ -356,8 +353,6 @@ void Player::shoot(float target_x, float target_y) {
     bullets.push_back(Bullet(x, y, dx, dy));
 }
 
-std::vector<Bullet>& Player::getBullets() {
-    return bullets;
-}
+
 
 ============== 
