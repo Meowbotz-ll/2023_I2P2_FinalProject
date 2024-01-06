@@ -1,21 +1,39 @@
 #include "player.h"
 #include "global.h"
 #include "bullet.h"
+#include "log.h"
 #include <vector>
 #include <cmath>
 #include <algorithm>
-
 
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 
 Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0){
+    for (int i = 0; i < 4; ++i) {
+        walkingGif[i] = nullptr;
+    }
 }
 
-void Player::init(float x, float y) {
+Player::~Player() {
+    for (int i = 0; i < 2; ++i) {
+        if (walkingGif[i] != nullptr) {
+            algif_destroy_animation(walkingGif[i]);
+        }
+    }
+}
+void Player::init(float x, float y,const char* gifFile[2]) {
     this->x = x;
     this->y = y;
+    for(int i=0;i<2;i++)
+    {
+        walkingGif[i]=algif_load_animation(gifFile[i]);
+        if (!walkingGif[i]) {
+        Log::Error("Failed to load GIF: " + std::string(gifFile[i]));
+        }
+    }
+    
 }
 
 void Player::update() {
@@ -33,10 +51,12 @@ void Player::update() {
     if (key_state[ALLEGRO_KEY_A]) {
         x -= 4.0;
         facingRight = false;
+        currentDirection = 0; // Assuming left direction
     }
     if (key_state[ALLEGRO_KEY_D]) {
         x += 4.0;
         facingRight = true;
+        currentDirection = 1; // Assuming left direction
     }
 
     if (key_state[ALLEGRO_KEY_SPACE] && onGround) {
@@ -73,7 +93,21 @@ void Player::update() {
 }
 
 void Player::draw() {
-    al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
+     //al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
+
+     ALLEGRO_BITMAP* frameBitmap = algif_get_bitmap(walkingGif[currentDirection], al_get_time());
+     if (frameBitmap) {
+        // Get the dimensions of the bitmap
+        int bitmapWidth = al_get_bitmap_width(frameBitmap);
+        int bitmapHeight = al_get_bitmap_height(frameBitmap);
+
+        // Calculate the position to draw the bitmap so that it's centered on the player's coordinates
+        float drawX = x - bitmapWidth / 2.0f;
+        float drawY = y - bitmapHeight / 2.0f;
+
+        // Draw the bitmap
+        al_draw_bitmap(frameBitmap, drawX, drawY, 0);
+    }
         // Draw each bullet
     for (auto& bullet : bullets) {
         bullet.draw();

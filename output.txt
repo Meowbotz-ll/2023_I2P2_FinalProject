@@ -1,3 +1,212 @@
+File: .\algif.cpp 
+-------------- 
+#include "algif.h"
+#include <allegro5/allegro_primitives.h>
+#include <math.h>
+
+/* Renders the next frame in a GIF animation to the given position.
+ * You need to call this in order on the same destination for frames
+ * [0..gif->frames_count - 1] to properly render all the frames in the GIF.
+ * The current target bitmap should have the same height as the animation,
+ * and blending should be set to fully copy RGBA.
+ */
+void algif_render_frame(ALGIF_ANIMATION *gif, int frame, int xpos, int ypos) {
+    int x, y, w, h;
+    ALGIF_FRAME *f = &gif->frames[frame];
+    ALGIF_PALETTE *pal;
+    if (frame == 0) {
+        al_draw_filled_rectangle(xpos, ypos, xpos + gif->width,
+              ypos + gif->height, al_map_rgba_f(0, 0, 0, 0));
+    }
+    else {
+        ALGIF_FRAME *p = &gif->frames[frame - 1];
+        if (p->disposal_method == 2) {
+            al_draw_filled_rectangle(xpos + p->xoff, ypos + p->yoff,
+                xpos + p->xoff + p->bitmap_8_bit->w,
+                ypos + p->yoff + p->bitmap_8_bit->h,
+                al_map_rgba_f(0, 0, 0, 0));
+        }
+        else if (p->disposal_method == 3 && gif->store) {
+            al_draw_bitmap_region(gif->store, xpos + p->xoff, ypos + p->yoff,
+                p->bitmap_8_bit->w,
+                p->bitmap_8_bit->h,
+                xpos + p->xoff, ypos + p->yoff, 0);
+            al_destroy_bitmap(gif->store);
+            gif->store = NULL;
+        }
+    }
+    w = f->bitmap_8_bit->w;
+    h = f->bitmap_8_bit->h;
+    if (f->disposal_method == 3) {
+        if (gif->store)
+            al_destroy_bitmap(gif->store);
+        gif->store = al_clone_bitmap(al_get_target_bitmap());
+    }
+    pal = &gif->frames[frame].palette;
+    if (pal->colors_count == 0)
+        pal = &gif->palette;
+
+    for (y = 0; y < h; y++) {
+        for (x = 0; x < w; x++) {
+            int c = f->bitmap_8_bit->data[x + y * f->bitmap_8_bit->w];
+            if (c != f->transparent_index) {
+                al_draw_pixel(xpos + f->xoff + x, ypos + f->yoff + y,
+                    al_map_rgb(pal->colors[c].r, pal->colors[c].g,
+                        pal->colors[c].b));
+            }
+        }
+    }
+}
+
+ALGIF_ANIMATION *algif_load_animation_f(ALLEGRO_FILE *file) {
+    ALGIF_ANIMATION *gif = algif_load_raw(file);
+
+    if (!gif)
+        return gif;
+
+    al_init_primitives_addon();
+
+    gif->duration = 0;
+    ALLEGRO_STATE s;
+    al_store_state(&s, ALLEGRO_STATE_TARGET_BITMAP | ALLEGRO_STATE_BLENDER);
+    al_set_blender(ALLEGRO_ADD, ALLEGRO_ONE, ALLEGRO_ZERO);
+    int n = gif->frames_count;
+    int i;
+    for (i = 0; i < n; i++) {
+        ALGIF_FRAME *f = &gif->frames[i];
+        f->rendered = al_create_bitmap(gif->width, gif->height);
+        al_set_target_bitmap(f->rendered);
+        algif_render_frame(gif, i, 0, 0);
+        gif->duration += f->duration;
+    }
+
+    al_restore_state(&s);
+    return gif;
+}
+
+ALGIF_ANIMATION *algif_load_animation(char const *filename) {
+    ALLEGRO_FILE *file = al_fopen(filename, "rb");
+    return algif_load_animation_f(file);
+}
+
+ALLEGRO_BITMAP *algif_get_bitmap(ALGIF_ANIMATION *gif, double seconds) {
+    if(gif->start_time == 0){
+        gif->start_time = seconds;
+    }
+    seconds -= gif->start_time;
+    double gif_duration = gif->duration / 100.0;
+    // no loop
+    if(gif->loop == -1 && seconds > gif_duration ){
+        gif->done = true;
+        gif->start_time = 0;
+        return nullptr;
+    }
+    // loop n times
+    if(gif->loop > 0 && seconds > gif_duration*gif->loop){
+        gif->done = true;
+        gif->start_time = 0;
+        return nullptr;
+    }
+    seconds = fmod(seconds, gif_duration);
+    int n = gif->frames_count;
+    double d = 0;
+    int i;
+    for (i = 0; i < n; i++) {
+        d += gif->frames[i].duration / 100.0;
+        if (seconds < d){
+            gif->display_index = i;
+            return gif->frames[i].rendered;
+        }
+
+    }
+    return gif->frames[0].rendered;
+}
+
+ALLEGRO_BITMAP *algif_get_frame_bitmap(ALGIF_ANIMATION *gif, int i) {
+    return gif->frames[i].rendered;
+}
+
+double algif_get_frame_duration(ALGIF_ANIMATION *gif, int i) {
+    return gif->frames[i].duration / 100.0;
+}
+============== 
+File: .\bitmap.cpp 
+-------------- 
+#include "algif.h"
+
+ALGIF_BITMAP *algif_create_bitmap(int w, int h) {
+    ALGIF_BITMAP *bitmap = (ALGIF_BITMAP *)calloc(1, sizeof *bitmap);
+    bitmap->w = w;
+    bitmap->h = h;
+    bitmap->data = (uint8_t *)calloc(1, w * h);
+    return bitmap;
+}
+
+void algif_destroy_bitmap(ALGIF_BITMAP *bitmap) {
+    free(bitmap->data);
+    free(bitmap);
+}
+
+void algif_blit(ALGIF_BITMAP *from, ALGIF_BITMAP *to, int xf, int yf, int xt, int yt,
+        int w, int h) {
+
+    if (w <= 0 || h <= 0)
+        return;
+
+    /* source clipping */
+    if (xf < 0) {
+        w += xf;
+        xt -= xf;
+        xf = 0;
+    }
+    if (yf < 0) {
+        h += yf;
+        yt -= yf;
+        yf = 0;
+    }
+    int wf = from->w;
+    int hf = from->h;
+    if (xf + w > wf) {
+        w = wf - xf;
+    }
+    if (yf + h > hf) {
+        h = hf - yf;
+    }
+
+    /* destination clipping */
+    if (xt < 0) {
+        w += xt;
+        xf -= xt;
+        xt = 0;
+    }
+    if (yt < 0) {
+        h += yt;
+        yf -= yt;
+        yt = 0;
+    }
+    int wt = to->w;
+    int ht = to->h;
+    if (xt + w > wt) {
+        w = wt - xt;
+    }
+    if (yt + h > ht) {
+        h = ht - yt;
+    }
+
+    if (w <= 0 || h <= 0)
+        return;
+
+    /* copy row by row */
+    uint8_t *pf = from->data + yf * from->w;
+    uint8_t *pt = to->data + yt * to->w;
+    int i;
+    for (i = 0; i < h; i++) {
+        memmove(pt + xt, pf + xf, w);
+        pf += from->w;
+        pt += to->w;
+    }
+}
+============== 
 File: .\bullet.cpp 
 -------------- 
 #include "bullet.h"
@@ -7,7 +216,7 @@ Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy
 void Bullet::update() {
     x += dx;
     y += dy;
-    // 檢查是否超出屏幕範圍
+    // Added: Check if the bullet is out of screen bounds
     if (x < 0 || x > 800 || y < 0 || y > 600) {
         alive = false;
     }
@@ -15,27 +224,27 @@ void Bullet::update() {
 
 void Bullet::draw() {
     al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
-}
-============== 
+}============== 
 File: .\enemy.cpp 
 -------------- 
 #include "Enemy.h"
 
 Enemy::Enemy(float x, float y, int initialHP) 
-    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)) {} // Blue color
+    : x(x), y(y), hp(initialHP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
 
 void Enemy::update() {
     // Update logic for enemy (optional for this example)
 }
 
 void Enemy::draw() {
-    al_draw_filled_circle(x, y, 20, color); // Drawing the enemy as a circle
+    if(!alive) return;
+    al_draw_filled_circle(x, y, RADIUS, color); // Drawing the enemy as a circle
 }
 
 void Enemy::hit(int damage) {
     hp -= damage;
-    if (hp > 0) {
-        color = al_map_rgb(0, 0, 200); // Change color to indicate damage
+    if (hp <= 0) {
+        alive = false; // 標記敵人為死亡，不再繪製或更新
     }
 }
 
@@ -45,7 +254,6 @@ bool Enemy::isAlive() const {
 File: .\gameWindow.cpp 
 -------------- 
 #include "gameWindow.h"
-#include "allegro_setup.h"
 #include "log.h"  // Include your log class
 #include "algorithm"
 #include "bullet.h"
@@ -120,6 +328,16 @@ void GameWindow::init() {
     menuMusic = al_load_sample("audio/Electroman-Adventures.ogg");
     gameMusic = al_load_sample("audio/Electroman-Adventures.ogg");
 
+const char* playerGifFiles[2] = {
+        "player_img/skeleton_left.gif",   // Replace with actual file path
+        "player_img/skeleton_right.gif",  // Replace with actual file path
+    };
+
+// Log the loading of each GIF file
+    for (int i = 0; i < 2; ++i) {
+        Log::Info(std::string("Loading GIF: ") + playerGifFiles[i]);
+    }
+
 if (!menuMusic || !gameMusic) {
     Log::Error("Failed to load music files");
     return;
@@ -133,7 +351,6 @@ if (!menuMusic || !gameMusic) {
     } else {
         Log::Info("Display created");
     }
-
     // Create timer
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 60.0); // 60 FPS
     if (!timer) {
@@ -159,7 +376,7 @@ if (!menuMusic || !gameMusic) {
     al_register_event_source(event_queue, al_get_mouse_event_source());
     al_start_timer(timer);
 
-    player.init(400, 500);
+    player.init(400, 500,playerGifFiles);
 
     Log::Info("GameWindow initialization complete");
 }
@@ -224,6 +441,25 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
+        // 处理子弹和敌人的碰撞
+        for (auto& bullet : player.getBullets()) {
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(1);
+                }
+            }
+        }
+    
+
+        // 移除不活躍的子彈和敵人
+        /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                    [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
+                    [](const Enemy& enemy) { return !enemy.isAlive(); }), enemies.end());
+
+        break;
+
+        }
 
         draw();
     }
@@ -232,8 +468,276 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    player.draw();
+
+    switch (currentState) {
+        case MENU:
+            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            menu.draw();
+            break;
+
+        case GAME:
+            al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            player.draw();
+    for (auto& enemy : enemies) {
+        enemy.draw();
+    }
+            // Draw other game elements
+            break;
+    }
+
     al_flip_display();
+}
+bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
+    // Simple circle-rectangle collision detection
+    float distX = std::abs(bullet.x - enemy.x);
+    float distY = std::abs(bullet.y - enemy.y);
+
+    if (distX > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+    if (distY > (Bullet::SIZE / 2 + Enemy::RADIUS)) { return false; }
+
+    if (distX <= (Bullet::SIZE / 2)) { return true; } 
+    if (distY <= (Bullet::SIZE / 2)) { return true; }
+
+    // Corner collision
+    float dx = distX - Bullet::SIZE / 2;
+    float dy = distY - Bullet::SIZE / 2;
+    return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
+}
+
+============== 
+File: .\gif.cpp 
+-------------- 
+#include "algif.h"
+
+#include <stdlib.h>
+#include <string.h>
+
+int LZW_decode (ALLEGRO_FILE * file, ALGIF_BITMAP *bmp);
+
+/* Destroy a complete gif, including all frames. */
+void algif_destroy_animation(ALGIF_ANIMATION *gif) {
+    int i;
+
+    for (i = 0; i < gif->frames_count; i++)
+    {
+        ALGIF_FRAME *frame = gif->frames + i;
+
+        if (frame->bitmap_8_bit)
+            algif_destroy_bitmap (frame->bitmap_8_bit);
+        if (frame->rendered)
+            al_destroy_bitmap(frame->rendered);
+    }
+    if (gif->store)
+        al_destroy_bitmap(gif->store);
+    free (gif->frames);
+    free (gif);
+}
+
+static void read_palette (ALLEGRO_FILE * file, ALGIF_PALETTE *palette) {
+    int i;
+
+    for (i = 0; i < palette->colors_count; i++)
+    {
+        palette->colors[i].r = al_fgetc (file);
+        palette->colors[i].g = al_fgetc (file);
+        palette->colors[i].b = al_fgetc (file);
+    }
+}
+
+static void deinterlace (ALGIF_BITMAP *bmp)
+{
+    ALGIF_BITMAP *n = algif_create_bitmap (bmp->w, bmp->h);
+    int y, i = 0;
+    for (y = 0; y < n->h; y += 8)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    for (y = 4; y < n->h; y += 8)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    for (y = 2; y < n->h; y += 4)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    for (y = 1; y < n->h; y += 2)
+    {
+        algif_blit (bmp, n, 0, i++, 0, y, n->w, 1);
+    }
+    algif_blit (n, bmp, 0, 0, 0, 0, n->w, n->h);
+    algif_destroy_bitmap (n);
+}
+
+ALGIF_ANIMATION *algif_load_raw(ALLEGRO_FILE *file) {
+    if (!file)
+        return NULL;
+
+    int version;
+    ALGIF_BITMAP *bmp = NULL;
+    int i, j;
+    ALGIF_ANIMATION *gif = (ALGIF_ANIMATION *)calloc (1, sizeof *gif);
+    ALGIF_FRAME frame;
+    gif->frames_count = 0;
+
+    /* is it really a GIF? */
+    if (al_fgetc (file) != 'G')
+        goto error;
+    if (al_fgetc (file) != 'I')
+        goto error;
+    if (al_fgetc (file) != 'F')
+        goto error;
+    if (al_fgetc (file) != '8')
+        goto error;
+    /* '7' or '9', for 87a or 89a. */
+    version = al_fgetc (file);
+    if (version != '7' && version != '9')
+        goto error;
+    if (al_fgetc (file) != 'a')
+        goto error;
+
+    gif->width = al_fread16le (file);
+    gif->height = al_fread16le (file);
+    i = al_fgetc (file);
+    /* Global color table? */
+    if (i & 128)
+        gif->palette.colors_count = 1 << ((i & 7) + 1);
+    else
+        gif->palette.colors_count = 0;
+    /* Background color is only valid with a global palette. */
+    gif->background_index = al_fgetc (file);
+
+    /* Skip aspect ratio. */
+    al_fseek (file, 1, ALLEGRO_SEEK_CUR);
+
+    if (gif->palette.colors_count)
+    {
+        read_palette (file, &gif->palette);
+    }
+
+    memset(&frame, 0, sizeof frame); /* For first frame. */
+    frame.transparent_index = -1;
+
+    do
+    {
+        i = al_fgetc (file);
+
+        switch (i)
+        {
+            case 0x2c:         /* Image Descriptor */
+            {
+                int w, h;
+                int interlaced = 0;
+
+                frame.xoff = al_fread16le (file);
+                frame.yoff = al_fread16le (file);
+                w = al_fread16le (file);
+                h = al_fread16le (file);
+                bmp = algif_create_bitmap (w, h);
+                if (!bmp)
+                    goto error;
+                i = al_fgetc (file);
+
+                /* Local palette. */
+                if (i & 128)
+                {
+                    frame.palette.colors_count = 1 << ((i & 7) + 1);
+                    read_palette (file, &frame.palette);
+                }
+                else
+                {
+                    frame.palette.colors_count = 0;
+                }
+
+                if (i & 64)
+                    interlaced = 1;
+
+                if (LZW_decode (file, bmp))
+                    goto error;
+
+                if (interlaced)
+                    deinterlace (bmp);
+
+                frame.bitmap_8_bit = bmp;
+                bmp = NULL;
+
+                gif->frames_count++;
+                gif->frames =
+                    (ALGIF_FRAME*)realloc (gif->frames,
+                             gif->frames_count * sizeof *gif->frames);
+                gif->frames[gif->frames_count - 1] = frame;
+
+                memset(&frame, 0, sizeof frame); /* For next frame. */
+                frame.transparent_index = -1;
+
+                break;
+            }
+            case 0x21: /* Extension Introducer. */
+                j = al_fgetc (file); /* Extension Type. */
+                i = al_fgetc (file); /* Size. */
+                if (j == 0xf9) /* Graphic Control Extension. */
+                {
+                    /* size must be 4 */
+                    if (i != 4)
+                        goto error;
+                    i = al_fgetc (file);
+                    frame.disposal_method = (i >> 2) & 7;
+                    frame.duration = al_fread16le (file);
+                    if (i & 1)  /* Transparency? */
+                    {
+                        frame.transparent_index = al_fgetc (file);
+                    }
+                    else
+                    {
+                        al_fseek (file, 1, ALLEGRO_SEEK_CUR);
+                        frame.transparent_index = -1;
+                    }
+                    i = al_fgetc (file); /* Size. */
+                }
+                /* Application Extension. */
+                else if (j == 0xff)
+                {
+                    if (i == 11)
+                    {
+                        char name[12];
+                        al_fread (file, name, 11);
+                        i = al_fgetc (file); /* Size. */
+                        name[11] = '\0';
+                        if (!strcmp (name, "NETSCAPE2.0"))
+                        {
+                            if (i == 3)
+                            {
+                                j = al_fgetc (file);
+                                gif->loop = al_fread16le (file);
+                                if (j != 1)
+                                    gif->loop = 0;
+                                i = al_fgetc (file); /* Size. */
+                            }
+                        }
+                    }
+                }
+
+                /* Possibly more blocks until terminator block (0). */
+                while (i)
+                {
+                    al_fseek (file, i, ALLEGRO_SEEK_CUR);
+                    i = al_fgetc (file);
+                }
+                break;
+            case 0x3b:
+                /* GIF Trailer. */
+                al_fclose (file);
+                return gif;
+        }
+    }
+    while (true);
+  error:
+    if (file)
+        al_fclose (file);
+    if (gif)
+        algif_destroy_animation (gif);
+    if (bmp)
+        algif_destroy_bitmap (bmp);
+    return NULL;
 }
 ============== 
 File: .\global.cpp 
@@ -272,6 +776,154 @@ void Log::Info(const std::string& message) {
 
 void Log::Error(const std::string& message) {
     std::cerr << "ERROR: " << message << std::endl;
+}
+============== 
+File: .\lzw.cpp 
+-------------- 
+#include "algif.h"
+
+static int
+read_code (ALLEGRO_FILE * file, char *buf, int *bit_pos, int bit_size)
+{
+    int i;
+    int code = 0;
+    int pos = 1;
+
+    for (i = 0; i < bit_size; i++)
+    {
+        int byte_pos = (*bit_pos >> 3) & 255;
+
+        if (byte_pos == 0)
+        {
+            int data_len = al_fgetc (file);
+
+            if (data_len == 0)
+            {
+                //printf ("Fatal. Errorneous GIF stream.\n");
+                //abort ();
+                return -1;
+            }
+            al_fread (file, buf + 256 - data_len, data_len);
+            byte_pos = 256 - data_len;
+            *bit_pos = byte_pos << 3;
+        }
+        if (buf[byte_pos] & (1 << (*bit_pos & 7)))
+            code += pos;
+        pos += pos;
+        (*bit_pos)++;
+    }
+    return code;
+}
+
+int
+LZW_decode (ALLEGRO_FILE * file, ALGIF_BITMAP *bmp)
+{
+    int orig_bit_size;
+    char buf[256];
+    int bit_size;
+    int bit_pos;
+    int clear_marker;
+    int end_marker;
+    struct
+    {
+        int prefix;
+        int c;
+        int len;
+    }
+    codes[4096];                /* Maximum bit size is 12. */
+    int n;
+    int i, prev, code, c;
+    int out_pos = 0;
+
+    orig_bit_size = al_fgetc (file);
+    n = 2 + (1 << orig_bit_size);
+
+    for (i = 0; i < n; i++)
+    {
+        codes[i].c = i;
+        codes[i].len = 0;
+    }
+
+    clear_marker = n - 2;
+    end_marker = n - 1;
+
+    bit_size = orig_bit_size + 1;
+
+    bit_pos = 0;
+
+    /* Expect to read clear code as first code here. */
+    prev = read_code (file, buf, &bit_pos, bit_size);
+    //printf("%d %d = %d\n", bit_pos, bit_size, prev);
+    if (prev == -1)
+        return -1;
+    do
+    {
+        code = read_code (file, buf, &bit_pos, bit_size);
+        //printf("%d %d = %d\n", bit_pos, bit_size, code);
+        if (code == -1)
+            return -1;
+        if (code == clear_marker)
+        {
+            bit_size = orig_bit_size;
+            n = 1 << bit_size;
+            n += 2;
+            bit_size++;
+            prev = code;
+            continue;
+        }
+
+        if (code == end_marker)
+            break;
+
+        /* Known code: ok. Else: must be doubled char. */
+        if (code < n)
+            c = code;
+        else
+            c = prev;
+
+        /* Output the code. */
+        out_pos += codes[c].len;
+        i = 0;
+        do
+        {
+            bmp->data[out_pos - i] = codes[c].c;
+            if (codes[c].len)
+                c = codes[c].prefix;
+            else
+                break;
+            i++;
+        }
+        while (1);
+
+        out_pos++;
+
+        /* Unknown code -> must be double char. */
+        if (code >= n)
+        {
+            bmp->data[out_pos] = codes[c].c;
+            out_pos++;
+        }
+
+        /* Except after clear marker, build new code. */
+        if (prev != clear_marker)
+        {
+            codes[n].prefix = prev;
+            codes[n].len = codes[prev].len + 1;
+            codes[n].c = codes[c].c;
+            n++;
+        }
+
+        /* Out of bits? Increase. */
+        if (n == (1 << bit_size))
+        {
+            if (bit_size < 12)
+                bit_size++;
+        }
+
+        prev = code;
+    }
+    while (1);
+    return 0;
 }
 ============== 
 File: .\main.cpp 
@@ -326,21 +978,39 @@ File: .\player.cpp
 #include "player.h"
 #include "global.h"
 #include "bullet.h"
+#include "log.h"
 #include <vector>
 #include <cmath>
 #include <algorithm>
-
 
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 
 Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0){
+    for (int i = 0; i < 4; ++i) {
+        walkingGif[i] = nullptr;
+    }
 }
 
-void Player::init(float x, float y) {
+Player::~Player() {
+    for (int i = 0; i < 2; ++i) {
+        if (walkingGif[i] != nullptr) {
+            algif_destroy_animation(walkingGif[i]);
+        }
+    }
+}
+void Player::init(float x, float y,const char* gifFile[2]) {
     this->x = x;
     this->y = y;
+    for(int i=0;i<2;i++)
+    {
+        walkingGif[i]=algif_load_animation(gifFile[i]);
+        if (!walkingGif[i]) {
+        Log::Error("Failed to load GIF: " + std::string(gifFile[i]));
+        }
+    }
+    
 }
 
 void Player::update() {
@@ -358,10 +1028,12 @@ void Player::update() {
     if (key_state[ALLEGRO_KEY_A]) {
         x -= 4.0;
         facingRight = false;
+        currentDirection = 0; // Assuming left direction
     }
     if (key_state[ALLEGRO_KEY_D]) {
         x += 4.0;
         facingRight = true;
+        currentDirection = 1; // Assuming left direction
     }
 
     if (key_state[ALLEGRO_KEY_SPACE] && onGround) {
@@ -398,7 +1070,21 @@ void Player::update() {
 }
 
 void Player::draw() {
-    al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
+     //al_draw_filled_rectangle(x, y, x + PLAYER_SIZE, y + PLAYER_SIZE, al_map_rgb(255, 0, 0));
+
+     ALLEGRO_BITMAP* frameBitmap = algif_get_bitmap(walkingGif[currentDirection], al_get_time());
+     if (frameBitmap) {
+        // Get the dimensions of the bitmap
+        int bitmapWidth = al_get_bitmap_width(frameBitmap);
+        int bitmapHeight = al_get_bitmap_height(frameBitmap);
+
+        // Calculate the position to draw the bitmap so that it's centered on the player's coordinates
+        float drawX = x - bitmapWidth / 2.0f;
+        float drawY = y - bitmapHeight / 2.0f;
+
+        // Draw the bitmap
+        al_draw_bitmap(frameBitmap, drawX, drawY, 0);
+    }
         // Draw each bullet
     for (auto& bullet : bullets) {
         bullet.draw();

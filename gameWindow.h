@@ -6,8 +6,10 @@
 #include "bullet.h"
 #include "enemy.h"
 #include "log.h"
-
+#include "allegro_setup.h"
+#include <string>
 #include <vector>
+#include <sstream> // Include this header for ostringstream
 
 #include "menu.h"
 
@@ -38,6 +40,10 @@ private:
     Menu menu;
     bool doexit;
     void update();
+    ALLEGRO_FONT* ui_font; // Font for drawing UI text
+    int score;             // Player's current score
+    double startTime;      // Time when the game started
+    double currentTime;    // Current game time
     
 };
 

@@ -1,5 +1,4 @@
 #include "gameWindow.h"
-#include "allegro_setup.h"
 #include "log.h"  // Include your log class
 #include "algorithm"
 #include "bullet.h"
@@ -18,6 +17,9 @@ GameWindow::~GameWindow() {
     Log::Info("GameWindow Deleted");
     al_destroy_display(display);
     al_destroy_event_queue(event_queue);
+    if (ui_font) {
+        al_destroy_font(ui_font);
+    }
 }
 
 void GameWindow::init() {
@@ -57,6 +59,12 @@ void GameWindow::init() {
         Log::Error("Failed to load font at fonts/ARCADE.TTF");
     }
     menu.init(font);
+    //ui font
+    ui_font = al_load_font("fonts/ARCADE.TTF", 24, 0); // Load a font
+    if (!ui_font) {
+        Log::Error("Failed to load UI font");
+    }
+    startTime = al_get_time(); // Record the start time
 // Initialize audio subsystem
     if (!al_install_audio()) {
         Log::Error("Failed to initialize audio");
@@ -71,8 +79,18 @@ void GameWindow::init() {
         return;
     }
     // Init background Music
-    menuMusic = al_load_sample("audio/Electroman-Adventures.ogg");
-    gameMusic = al_load_sample("audio/Electroman-Adventures.ogg");
+    menuMusic = al_load_sample("audio/Electroman-Adventures.mp3");
+    gameMusic = al_load_sample("audio/Electroman-Adventures.mp3");
+
+const char* playerGifFiles[2] = {
+        "player_img/skeleton_left.gif",   // Replace with actual file path
+        "player_img/skeleton_right.gif",  // Replace with actual file path
+    };
+
+// Log the loading of each GIF file
+    for (int i = 0; i < 2; ++i) {
+        Log::Info(std::string("Loading GIF: ") + playerGifFiles[i]);
+    }
 
 if (!menuMusic || !gameMusic) {
     Log::Error("Failed to load music files");
@@ -87,7 +105,6 @@ if (!menuMusic || !gameMusic) {
     } else {
         Log::Info("Display created");
     }
-
     // Create timer
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 60.0); // 60 FPS
     if (!timer) {
@@ -113,7 +130,7 @@ if (!menuMusic || !gameMusic) {
     al_register_event_source(event_queue, al_get_mouse_event_source());
     al_start_timer(timer);
 
-    player.init(400, 500);
+    player.init(400, 500,playerGifFiles);
 
     Log::Info("GameWindow initialization complete");
 }
@@ -213,11 +230,23 @@ void GameWindow::draw() {
             break;
 
         case GAME:
+currentTime = static_cast<int>(al_get_time() - startTime);
+
+            std::ostringstream timeStream;
+            timeStream.precision(0); // Set precision to 0 to avoid any decimals
+            timeStream << "Time: " << currentTime;
+            std::string timeText = timeStream.str();
+
+            std::string scoreText = "Score: " + std::to_string(score);
+
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
+            
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             player.draw();
-    for (auto& enemy : enemies) {
-        enemy.draw();
-    }
+            for (auto& enemy : enemies) {
+                enemy.draw();
+            }
             // Draw other game elements
             break;
     }

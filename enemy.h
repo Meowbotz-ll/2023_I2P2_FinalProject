@@ -13,7 +13,6 @@ public:
     static const int RADIUS = 10;
 
 private:
-    
     int hp;
     ALLEGRO_COLOR color;
     bool alive;

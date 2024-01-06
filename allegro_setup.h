@@ -8,6 +8,6 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 #include <allegro5/allegro_ttf.h>
-#include "aligif/algif.h"
+#include "algif.h"
 
 #endif // ALLEGRO_SETUP_H
