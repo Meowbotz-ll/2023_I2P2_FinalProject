@@ -71,14 +71,11 @@ void Enemy::shootAtPlayer(const Player& player) {
 
             Bullet newBullet(x, y, dx * bulletSpeed, dy * bulletSpeed);
             newBullet.setSize(10); // 例如，设置子弹大小为10
+            newBullet.setEnemyBullet(true); // 设为敌人子弹
             bullets.push_back(newBullet);
         }
     }
 }
-
-
-  
-    
 
 void Enemy::drawBullets() {
     if(type == AIR) {
@@ -96,4 +93,9 @@ void Enemy::removeInactiveBullets() {
                    [](const Bullet& bullet) { return !bullet.isAlive(); }),
                    bullets.end());
 }
+
+void Enemy::clearBullets() {
+    bullets.clear();
+}
+
 

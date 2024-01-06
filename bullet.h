@@ -22,6 +22,13 @@ public:
     void setAlive(bool status); // 声明 setAlive 方法
     void setHit(bool status) { hit = status; }
     bool isHit() const { return hit; }
+    void setEnemyBullet(bool isEnemy) {
+        isEnemyBullet = isEnemy;
+    }
+
+    bool getIsEnemyBullet() const {
+        return isEnemyBullet;
+    }
 
 private:
     float dx, dy;
@@ -29,4 +36,5 @@ private:
     int damage;  // 存储每个子弹的伤害值
     bool hit; // 新增成员变量，用于跟踪子弹是否已经击中敌人
     int size;
+    bool isEnemyBullet;
 };

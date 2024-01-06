@@ -212,7 +212,6 @@ File: .\bullet.cpp
 #include "bullet.h"
 
 Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
-Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
 
 void Bullet::update() {
     x += dx; // 假設 speed 是成員變量
@@ -240,8 +239,9 @@ File: .\enemy.cpp
 #include <cmath>
 #include <algorithm>
 
-Enemy::Enemy(float x, float y, int initialHP) 
-    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)) {} // Blue color
+Enemy::Enemy(float x, float y, float vx, EnemyType type) 
+    : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false), type(type), lastShootTime(0) {}
+
 
 void Enemy::update() {
     if(type == AIR) x += vx;
@@ -311,10 +311,6 @@ void Enemy::shootAtPlayer(const Player& player) {
     }
 }
 
-
-  
-    
-
 void Enemy::drawBullets() {
     if(type == AIR) {
     al_draw_filled_rectangle(x, y, x + 10, y + 10, al_map_rgb(255, 255, 255));
@@ -332,6 +328,11 @@ void Enemy::removeInactiveBullets() {
                    bullets.end());
 }
 
+void Enemy::clearBullets() {
+    bullets.clear();
+}
+
+
 ============== 
 File: .\gameWindow.cpp 
 -------------- 
@@ -344,7 +345,7 @@ File: .\gameWindow.cpp
 #include <iterator>
 using namespace std;
 
-GameWindow::GameWindow() : currentState(MENU),backgroundImage(nullptr),doexit(false){
+GameWindow::GameWindow() : currentState(MENU),previousState(MENU),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
     Log::Info("GameWindow Created");
     init();
     //enemies.push_back(Enemy(100, 100, 0.5));
@@ -481,13 +482,53 @@ if (!menuMusic || !gameMusic) {
     Log::Info("GameWindow initialization complete");
 }
 
+void GameWindow::initMenuScene()
+{
+    Log::Info("Menu Scene Initialized");
+}
+void GameWindow::initGameOverScene() {
+    // Add your game over scene initialization code here
+    Log::Info("Game Over Scene Initialized");
+    // Example: Load game over assets, set up UI elements, etc.
+}
+void GameWindow::initGameScene()
+{
+    if(!gameSceneInitialized)
+    {
+        if(backgroundImage!=nullptr)
+        {
+        al_draw_bitmap(backgroundImage, 0, 0, 0);
+        Log::Info("Background Init");
+        }
+        gameSceneInitialized=true;
+    }
+    al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+}
+void GameWindow::initScene() {
+    // Check if the current state is different from the previous state
+    if (currentState != previousState) {
+        switch (currentState) {
+            case MENU:
+                initMenuScene();  // Initialize menu-specific resources
+                break;
+            case GAME:
+                initGameScene();  // Initialize game-specific resources
+                break;
+            case GAME_OVER:
 
+                break;
+            // Add other cases as needed
+        }
+        previousState = currentState;  // Update the previous state
+    }
+}
 void GameWindow::run() {
     Log::Info("Game Started!");
 
     while (!doexit) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
+        initScene();
         switch (currentState) {
             case MENU:
             //Log::Info("In Menu State");
@@ -506,23 +547,85 @@ void GameWindow::run() {
             //Log::Info("In Menu State");
             static double last_spawn_time = 0;
             static double enemySpawnInterval = 2.0;
-        switch (ev.type) {
+            // Check if the player's health is 0 or less
+            if (player.getHp() <= 0) {
+                //Log::Info("Game Over!");
+                currentState = GAME_OVER;
+            }
+            
+
+            switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
             
                 player.update();
                 // 遍历所有敌人
                 for (auto& enemy : enemies) {
-                    enemy.update();
+                    enemy.update(); // 更新敌人位置和状态
+                    enemy.removeInactiveBullets();
+                    // 如果敌人是天空中的敌人，则射击玩家
+                    if (enemy.getType() == EnemyType::AIR) {
+                        enemy.shootAtPlayer(player); // 让敌人射击玩家
+                    }
                 }
-                // 生成新敌人的代码
-                static double last_spawn_time = 0;
-                if (al_get_time() - last_spawn_time > 2.0) { // 每2秒生成一个敌人
+
+                // 将死亡或离开屏幕的敌人的子弹转移到全局子弹列表
+                /*for (auto& enemy : enemies) {
+                    if (!enemy.isAlive() || enemy.isOffScreen()) {
+                        const auto& enemyBullets = enemy.getBullets();
+                        bullets.insert(bullets.end(), enemyBullets.begin(), enemyBullets.end());
+                        enemy.clearBullets(); // 清空敵人的子彈列表
+                    }
+                }*/
+
+                // 移除不再存活或已经离开屏幕的敌人
+                enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                    [](const Enemy& enemy) {
+                        return !enemy.isAlive() || enemy.isOffScreen();
+                    }), enemies.end());
+
+                 // 更新全局子弹列表
+                for (auto& bullet : bullets) {
+                    bullet.update();
+                }
+                // 移除不活跃的子弹
+                /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                    [](const Bullet& b) { return !b.isAlive(); }), bullets.end());*/
+                
+                if (al_get_time() - last_spawn_time > enemySpawnInterval) {
                     last_spawn_time = al_get_time();
-                    float spawnY = static_cast<float>(rand() % 600); // 在屏幕高度范围内随机生成垂直位置
-                    float spawnX = -1; // 在屏幕左侧外生成敌人
-                    float velocityX = 1.0; // 向右移动的速度
-                    enemies.push_back(Enemy(spawnX, spawnY, velocityX));
+                    float spawnY;
+                    float velocityX;
+                    EnemyType type;
+
+                    // 随机决定生成哪种类型的敌人
+                    if (rand() % 2 == 0) {
+                        // 生成天上的敌人
+                        spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
+                        velocityX = 1.0; // 初始速度
+                        type = EnemyType::AIR;
+                    } else {
+                        // 生成地上的敌人
+                        spawnY = 500; // 与玩家相同的高度
+                        velocityX = 2.0; // 天上敌人速度的两倍
+                        type = EnemyType::GROUND;
+                    }
+
+                    // 随机决定敌人从左侧或右侧出现
+                    float spawnX;
+                    if (rand() % 2 == 0) {
+                        spawnX = -1; // 从屏幕左侧出现
+                    } else {
+                        spawnX = 801; // 从屏幕右侧出现
+                        velocityX = -velocityX; // 改变移动方向
+                    }
+
+                    // 添加敌人到列表
+                    enemies.push_back(Enemy(spawnX, spawnY, velocityX, type));
+                    enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
                 }
+
+
+
                 
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -549,11 +652,59 @@ void GameWindow::run() {
                     Log::Info("Left Mouse Button Clicked");
                     player.shoot(ev.mouse.x, ev.mouse.y);
                 }
+                if (ev.mouse.button & 2) {  // Right mouse button
+        Log::Info("Right Mouse Button Clicked");
+
+    }
+                break;
+                case GAME_OVER:
+
+                
                 break;
 
             // Add additional cases here for other types of events
         }
 
+        
+
+        // 检测子弹与敌人的碰撞
+        for (auto& bullet : player.getBullets()) {
+            if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
+
+            for (auto& enemy : enemies) {
+                if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                    enemy.hit(bullet.getDamage());
+                    bullet.setHit(true); // 标记子弹已经击中敌人
+                    bullet.setAlive(false); // 设置子弹为不活跃
+                    if(enemy.hp<=0){score++;}
+                    break; // 退出内部循环
+                }
+            }
+        }
+
+        /*for (auto& enemy : enemies) {
+            for (auto& bullet : enemy.getBullets()) {
+                bullet.update();
+                if (!bullet.isAlive()) {
+                    // 如果子弹不再活跃，将其从敌人的子弹列表中移除
+                    enemy.removeInactiveBullets();
+                } else {
+                    // 否则绘制子弹
+                    bullet.draw();
+                }
+            }
+        }*/
+
+        // 移除已不活动的敌人
+        enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
+                   [](const Enemy& enemy) { return !enemy.isAlive() || enemy.isOffScreen(); }), enemies.end());
+        case GAME_OVER:
+
+        break;
+
+        }
+
+        
         draw();
     }
 }
@@ -561,31 +712,30 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    // Draw the background image first
-    
+
+    // Move the declarations outside the switch statement
+    std::ostringstream timeStream;
+    std::string timeText;
+    std::string scoreText;
+    const int maxHealthWidth = 750; // Maximum width of the health bar
+    int currentHealthWidth;
 
     switch (currentState) {
         case MENU:
-            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             menu.draw();
             break;
 
         case GAME:
-            if(drawInit)
-            {
-            //al_draw_bitmap(backgroundImage, 0, 0, 0);
-            Log::Info("Background Init");
-            drawInit=false;
-            }
             currentTime = static_cast<int>(al_get_time() - startTime);
-
-            std::ostringstream timeStream;
-            timeStream.precision(0); // Set precision to 0 to avoid any decimals
             timeStream << "Time: " << currentTime;
-            std::string timeText = timeStream.str();
+            timeText = timeStream.str();
+            scoreText = "Score: " + std::to_string(score);
 
-            std::string scoreText = "Score: " + std::to_string(score);
+            // Draw Health Bar
+            currentHealthWidth = static_cast<int>((player.getHp() / 100) * maxHealthWidth);
+            al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0));
 
+            // Draw text
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
             
@@ -598,7 +748,11 @@ void GameWindow::draw() {
             for (auto& bullet : bullets) {
                 bullet.draw();
             }
-            // Draw other game elements
+            break;
+
+        case GAME_OVER:
+            // Drawing code for game over screen
+            al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
             break;
     }
 
@@ -1105,7 +1259,7 @@ const float JUMP_STRENGTH = -10.0;
 const int PLAYER_SIZE = 32;
 const int INITIAL_HP = 100; // Initial health points
 
-Player::Player() : x(0), y(0), dy(0), onGround(true), facingRight(true), bulletSpeed(15.0f),dashing(false),lastDashTime(0.0),currentWeapon(PISTOL),hp(INITIAL_HP){
+Player::Player() {
     for (int i = 0; i < 4; ++i) {
         walkingGif[i] = nullptr;
     }
@@ -1118,14 +1272,22 @@ Player::~Player() {
         }
     }
 }
-void Player::init(float x, float y,const char* gifFile[2]) {
-    this->x = x;
-    this->y = y;
-    for(int i=0;i<2;i++)
-    {
-        walkingGif[i]=algif_load_animation(gifFile[i]);
+void Player::init(float startX, float startY,const char* gifFile[2]) {
+    x = startX;
+    y = startY;
+    dy = 0;
+    onGround = true;
+    facingRight = true;
+    bulletSpeed = 15.0f;
+    dashing = false;
+    lastDashTime = 0.0;
+    currentWeapon = PISTOL;
+    hp = INITIAL_HP;
+
+    for(int i = 0; i < 2; i++) {
+        walkingGif[i] = algif_load_animation(gifFile[i]);
         if (!walkingGif[i]) {
-        Log::Error("Failed to load GIF: " + std::string(gifFile[i]));
+            Log::Error("Failed to load GIF: " + std::string(gifFile[i]));
         }
     }
     

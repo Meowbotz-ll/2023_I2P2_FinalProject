@@ -34,6 +34,7 @@ public:
         return bullets;
     };  // 获取子弹的方法
     void removeInactiveBullets();
+    void clearBullets();
 
 private:
     float vx, vy; // 新增：敌人的速度
@@ -43,6 +44,7 @@ private:
     EnemyType type;
     std::vector<Bullet> bullets;  // 将其作为成员变量
     double lastShootTime;
+    
 };
 
 

@@ -231,12 +231,13 @@ void GameWindow::run() {
                 }
 
                 // 将死亡或离开屏幕的敌人的子弹转移到全局子弹列表
-                for (auto& enemy : enemies) {
+                /*for (auto& enemy : enemies) {
                     if (!enemy.isAlive() || enemy.isOffScreen()) {
                         const auto& enemyBullets = enemy.getBullets();
                         bullets.insert(bullets.end(), enemyBullets.begin(), enemyBullets.end());
+                        enemy.clearBullets(); // 清空敵人的子彈列表
                     }
-                }
+                }*/
 
                 // 移除不再存活或已经离开屏幕的敌人
                 enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
@@ -249,8 +250,8 @@ void GameWindow::run() {
                     bullet.update();
                 }
                 // 移除不活跃的子弹
-                bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
-                    [](const Bullet& b) { return !b.isAlive(); }), bullets.end());
+                /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                    [](const Bullet& b) { return !b.isAlive(); }), bullets.end());*/
                 
                 if (al_get_time() - last_spawn_time > enemySpawnInterval) {
                     last_spawn_time = al_get_time();
@@ -284,9 +285,6 @@ void GameWindow::run() {
                     enemies.push_back(Enemy(spawnX, spawnY, velocityX, type));
                     enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
                 }
-
-
-
                 
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;

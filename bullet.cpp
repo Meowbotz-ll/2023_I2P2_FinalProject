@@ -3,13 +3,19 @@
 Bullet::Bullet(float x, float y, float dx, float dy) : x(x), y(y), dx(dx), dy(dy), alive(true), damage(Bullet::DEFAULT_DAMAGE), hit(false) {}
 
 void Bullet::update() {
-    x += dx; // 假設 speed 是成員變量
+    x += dx;
     y += dy;
-    // Added: Check if the bullet is out of screen bounds
-    if (x < 0 || x > 800 || y < 0 || y > 600) {
-        alive = false;
+
+    // 如果子弹是敌人的子弹，且超出屏幕，不设置为不活跃
+    if (isEnemyBullet && (x < 0 || x > 800 || y < 0 || y > 600)) {
+        // 可能不需要做任何事情
+    } else {
+        if (x < 0 || x > 800 || y < 0 || y > 600) {
+            alive = false;
+        }
     }
 }
+
 
 void Bullet::draw() {
     if(!alive) return;
