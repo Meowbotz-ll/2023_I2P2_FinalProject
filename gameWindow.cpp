@@ -211,8 +211,8 @@ void GameWindow::run() {
             static double enemySpawnInterval = 2.0;
             // Check if the player's health is 0 or less
             if (player.getHp() <= 0) {
-                Log::Info("Game Over!");
-                //currentState = GAME_OVER;
+                //Log::Info("Game Over!");
+                currentState = GAME_OVER;
             }
             
 
