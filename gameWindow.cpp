@@ -2,7 +2,7 @@
 #include "allegro_setup.h"
 #include "log.h"  // Include your log class
 
-GameWindow::GameWindow() : doexit(false) {
+GameWindow::GameWindow() : currentState(MENU),doexit(false){
     Log::Info("GameWindow Created");
     init();
 }
@@ -37,6 +37,19 @@ void GameWindow::init() {
         Log::Error("Failed to initialize mouse");
         return;
     }
+    // Initialize font add-ons
+    al_init_font_addon(); // Initialize the font addon
+    if (!al_init_ttf_addon()) { // Initialize the TrueType font addon
+        Log::Error("Failed to initialize TTF font addon");
+        return;
+    }
+// Initialize the font for the menu
+    Log::Info("Loading font...");
+    font = al_load_font("fonts/ARCADE.TTF", 36, 0);
+    if (!font) {
+        Log::Error("Failed to load font at fonts/ARCADE.TTF");
+    }
+    menu.init(font);
     // Initialize other necessary Allegro add-ons here
 
     // Create display
@@ -81,12 +94,28 @@ void GameWindow::init() {
 
 void GameWindow::run() {
     Log::Info("Game Started!");
+
     while (!doexit) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
+        switch (currentState) {
+            case MENU:
+            //Log::Info("In Menu State");
+                if (ev.type == ALLEGRO_EVENT_KEY_UP) {
+                    if (ev.keyboard.keycode == ALLEGRO_KEY_ENTER) {
+                        Log::Info("Enter Key Pressed - Switching to Game State"); // Debug message for pressing Enter
+                        currentState = GAME;
+                        menu.gameStart = true; // Update the flag in menu
+                    }
+                }
+                menu.update();
+                break;
 
+            case GAME:
+            //Log::Info("In Menu State");
         switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
+            
                 player.update();
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -115,6 +144,9 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
+        break;
+
+        }
 
         draw();
     }
@@ -123,6 +155,17 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    player.draw();
+
+    switch (currentState) {
+        case MENU:
+            menu.draw();
+            break;
+
+        case GAME:
+            player.draw();
+            // Draw other game elements
+            break;
+    }
+
     al_flip_display();
 }

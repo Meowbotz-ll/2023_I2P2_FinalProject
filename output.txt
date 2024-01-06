@@ -13,13 +13,38 @@ void Bullet::draw() {
     al_draw_filled_rectangle(x, y, x + SIZE, y + SIZE, al_map_rgb(255, 255, 255));
 }
 ============== 
+File: .\enemy.cpp 
+-------------- 
+#include "Enemy.h"
+
+Enemy::Enemy(float x, float y, int initialHP) 
+    : x(x), y(y), hp(initialHP), color(al_map_rgb(0, 0, 255)) {} // Blue color
+
+void Enemy::update() {
+    // Update logic for enemy (optional for this example)
+}
+
+void Enemy::draw() {
+    al_draw_filled_circle(x, y, 20, color); // Drawing the enemy as a circle
+}
+
+void Enemy::hit(int damage) {
+    hp -= damage;
+    if (hp > 0) {
+        color = al_map_rgb(0, 0, 200); // Change color to indicate damage
+    }
+}
+
+bool Enemy::isAlive() const {
+    return hp > 0;
+}============== 
 File: .\gameWindow.cpp 
 -------------- 
 #include "gameWindow.h"
 #include "allegro_setup.h"
 #include "log.h"  // Include your log class
 
-GameWindow::GameWindow() : doexit(false) {
+GameWindow::GameWindow() : doexit(false) ,currentState(MENU){
     Log::Info("GameWindow Created");
     init();
 }
@@ -98,12 +123,25 @@ void GameWindow::init() {
 
 void GameWindow::run() {
     Log::Info("Game Started!");
+
     while (!doexit) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
+        switch (currentState) {
+            case MENU:
+                menu.update(); // Update the menu scene
+                menu.draw();   // Draw the menu scene
 
+                if (menu.startGame()) {
+                    Log::Info("Switching to Gameplay");
+                    currentState = GAME; // Change state to gameplay
+                }
+                break;
+
+            case GAME:
         switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
+            
                 player.update();
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -132,6 +170,9 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
+        break;
+
+        }
 
         draw();
     }
@@ -140,7 +181,18 @@ void GameWindow::run() {
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
-    player.draw();
+
+    switch (currentState) {
+        case MENU:
+            // Draw menu
+            break;
+
+        case GAME:
+            player.draw();
+            // Draw other game elements
+            break;
+    }
+
     al_flip_display();
 }
 ============== 
