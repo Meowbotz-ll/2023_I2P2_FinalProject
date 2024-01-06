@@ -1,7 +1,9 @@
 #include "Enemy.h"
 
-Enemy::Enemy(float x, float y, int initialHP) 
-    : x(x), y(y), hp(initialHP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
+int Enemy::DEFAULT_HP = 7;  // 初始化静态成员变量
+
+Enemy::Enemy(float x, float y) 
+    : x(x), y(y), hp(Enemy::DEFAULT_HP), color(al_map_rgb(255, 255, 0)), alive(true) {} // 初始化alive为true // Blue color
 
 void Enemy::update() {
     // Update logic for enemy (optional for this example)

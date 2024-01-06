@@ -87,9 +87,8 @@ void Player::update() {
     for (auto& bullet : bullets) {
         bullet.update();
     }
-    // 移除不活跃的子弹
-    /*bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
-                [](const Bullet& bullet) { return !bullet.isAlive(); }), bullets.end());*/
+
+
 }
 
 void Player::draw() {
@@ -127,6 +126,17 @@ void Player::shoot(float target_x, float target_y) {
 
     bullets.push_back(Bullet(x, y, dx, dy));
 }
+
+void Player::markBulletDead(int index) {
+    // 将 index 转换为无符号类型
+    auto unsignedIndex = static_cast<std::vector<Bullet>::size_type>(index);
+
+    if (index >= 0 && unsignedIndex < bullets.size()) {
+        // 使用公共方法来设置子弹的状态
+        bullets[unsignedIndex].setAlive(false);
+    }
+}
+
 
 
 
