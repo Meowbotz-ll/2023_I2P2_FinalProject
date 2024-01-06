@@ -27,6 +27,7 @@ public:
     bool checkCollision(const Bullet& bullet, const Enemy& enemy);  // 添加参数
     std::vector<Bullet>& getBullets();  // 获取子弹的方法
     void draw();
+
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;

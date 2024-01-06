@@ -10,7 +10,7 @@ using namespace std;
 GameWindow::GameWindow() : currentState(MENU),backgroundImage(nullptr),doexit(false){
     Log::Info("GameWindow Created");
     init();
-    enemies.push_back(Enemy(100, 100, 0.5));
+    //enemies.push_back(Enemy(100, 100, 0.5));
 }
 
 GameWindow::~GameWindow() {
@@ -173,19 +173,73 @@ void GameWindow::run() {
             case ALLEGRO_EVENT_TIMER:
             
                 player.update();
+                // 遍历所有敌人
                 for (auto& enemy : enemies) {
-                    enemy.update();
+                    enemy.update(); // 更新敌人位置和状态
+                    //enemy.removeInactiveBullets();
+                    // 如果敌人是天空中的敌人，则射击玩家
+                    if (enemy.getType() == EnemyType::AIR) {
+                        enemy.shootAtPlayer(player); // 让敌人射击玩家
+                    }
                 }
-                // 生成新敌人的代码
+
+                // 将死亡或离开屏幕的敌人的子弹转移到全局子弹列表
+                for (auto& enemy : enemies) {
+                    if (!enemy.isAlive() || enemy.isOffScreen()) {
+                        const auto& enemyBullets = enemy.getBullets();
+                        bullets.insert(bullets.end(), enemyBullets.begin(), enemyBullets.end());
+                    }
+                }
+
+                // 移除不再存活或已经离开屏幕的敌人
+                enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                    [](const Enemy& enemy) {
+                        return !enemy.isAlive() || enemy.isOffScreen();
+                    }), enemies.end());
+
+                 // 更新全局子弹列表
+                for (auto& bullet : bullets) {
+                    bullet.update();
+                }
+                // 移除不活跃的子弹
+                bullets.erase(std::remove_if(bullets.begin(), bullets.end(), 
+                    [](const Bullet& b) { return !b.isAlive(); }), bullets.end());
                 
-                if (al_get_time() - last_spawn_time > 2.0 + enemySpawnInterval) { // 每2秒生成一个敌人
+                if (al_get_time() - last_spawn_time > enemySpawnInterval) {
                     last_spawn_time = al_get_time();
-                    float spawnY = static_cast<float>(rand() % 600); // 在屏幕高度范围内随机生成垂直位置
-                    float spawnX = -1; // 在屏幕左侧外生成敌人
-                    float velocityX = 1.0; // 向右移动的速度
-                    enemySpawnInterval = std::max(0.1, enemySpawnInterval - 1.0); // 逐渐减少间隔时间，但保持至少为1秒
-                    enemies.push_back(Enemy(spawnX, spawnY, velocityX));
+                    float spawnY;
+                    float velocityX;
+                    EnemyType type;
+
+                    // 随机决定生成哪种类型的敌人
+                    if (rand() % 2 == 0) {
+                        // 生成天上的敌人
+                        spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
+                        velocityX = 1.0; // 初始速度
+                        type = EnemyType::AIR;
+                    } else {
+                        // 生成地上的敌人
+                        spawnY = 500; // 与玩家相同的高度
+                        velocityX = 2.0; // 天上敌人速度的两倍
+                        type = EnemyType::GROUND;
+                    }
+
+                    // 随机决定敌人从左侧或右侧出现
+                    float spawnX;
+                    if (rand() % 2 == 0) {
+                        spawnX = -1; // 从屏幕左侧出现
+                    } else {
+                        spawnX = 801; // 从屏幕右侧出现
+                        velocityX = -velocityX; // 改变移动方向
+                    }
+
+                    // 添加敌人到列表
+                    enemies.push_back(Enemy(spawnX, spawnY, velocityX, type));
+                    enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
                 }
+
+
+
                 
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -219,7 +273,7 @@ void GameWindow::run() {
 
         
 
-
+        // 检测子弹与敌人的碰撞
         for (auto& bullet : player.getBullets()) {
             if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
 
@@ -233,6 +287,19 @@ void GameWindow::run() {
                 }
             }
         }
+
+        /*for (auto& enemy : enemies) {
+            for (auto& bullet : enemy.getBullets()) {
+                bullet.update();
+                if (!bullet.isAlive()) {
+                    // 如果子弹不再活跃，将其从敌人的子弹列表中移除
+                    enemy.removeInactiveBullets();
+                } else {
+                    // 否则绘制子弹
+                    bullet.draw();
+                }
+            }
+        }*/
 
         // 移除已不活动的敌人
         enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
@@ -281,7 +348,11 @@ void GameWindow::draw() {
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             player.draw();
             for (auto& enemy : enemies) {
+
                 enemy.draw();
+            }
+            for (auto& bullet : bullets) {
+                bullet.draw();
             }
             // Draw other game elements
             break;
