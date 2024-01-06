@@ -8,7 +8,6 @@
 
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
-const int PLAYER_SIZE = 32;
 const int INITIAL_HP = 100; // Initial health points
 
 Player::Player() {
@@ -54,7 +53,12 @@ float Player::getY() const{
 }
 
 
-
+void Player::getHit(int damage) {
+    hp -= damage;
+    if (hp <= 0) {
+        hp = 0;
+    }
+}
 
 void Player::update() {
 
@@ -197,10 +201,3 @@ void Player::markBulletDead(int index) {
     }
 }
 
-void Player::hit(int damage) {
-    hp -= damage;
-    if (hp < 0) {
-        hp = 0;
-    }
-    // Additional logic when player's health reaches 0
-}

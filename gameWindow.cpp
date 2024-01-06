@@ -166,6 +166,21 @@ void GameWindow::initGameScene()
     }
     al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 }
+bool GameWindow::checkCollision(const Bullet& bullet, const Player& player) {
+    // Simple AABB (Axis-Aligned Bounding Box) collision check
+    float playerLeft = player.getX();
+    float playerRight = player.getX() + player.PLAYER_SIZE;
+    float playerTop = player.getY();
+    float playerBottom = player.getY() + player.PLAYER_SIZE;
+
+    float bulletLeft = bullet.x;
+    float bulletRight = bullet.x + bullet.getSize();
+    float bulletTop = bullet.y;
+    float bulletBottom = bullet.y + bullet.getSize();
+
+    return (playerLeft < bulletRight && playerRight > bulletLeft &&
+            playerTop < bulletBottom && playerBottom > bulletTop);
+}
 void GameWindow::initScene() {
     // Check if the current state is different from the previous state
     if (currentState != previousState) {
@@ -191,6 +206,7 @@ void GameWindow::run() {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
         initScene();
+        
         switch (currentState) {
             case MENU:
             //Log::Info("In Menu State");
@@ -209,6 +225,17 @@ void GameWindow::run() {
             //Log::Info("In Menu State");
             static double last_spawn_time = 0;
             static double enemySpawnInterval = 2.0;
+
+            {
+        for (auto& enemy : enemies) {
+            for (auto& bullet : enemy.getBullets()) {
+                if (checkCollision(bullet, player)) {
+                    player.getHit(1);
+                    bullet.setAlive(false); // Remove the bullet upon collision
+                }
+            }
+        }
+    }
             // Check if the player's health is 0 or less
             if (player.getHp() <= 0) {
                 //Log::Info("Game Over!");
@@ -285,9 +312,6 @@ void GameWindow::run() {
                     enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
                 }
 
-
-
-                
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -319,7 +343,11 @@ void GameWindow::run() {
     }
                 break;
                 case GAME_OVER:
-
+                if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+                    Log::Info("Escape Clicked");
+                    // Example: Return to menu or close the game
+                    currentState=MENU;
+                }
                 
                 break;
 
@@ -342,20 +370,6 @@ void GameWindow::run() {
                 }
             }
         }
-
-        /*for (auto& enemy : enemies) {
-            for (auto& bullet : enemy.getBullets()) {
-                bullet.update();
-                if (!bullet.isAlive()) {
-                    // 如果子弹不再活跃，将其从敌人的子弹列表中移除
-                    enemy.removeInactiveBullets();
-                } else {
-                    // 否则绘制子弹
-                    bullet.draw();
-                }
-            }
-        }*/
-
         // 移除已不活动的敌人
         enemies.erase(std::remove_if(enemies.begin(), enemies.end(), 
                    [](const Enemy& enemy) { return !enemy.isAlive() || enemy.isOffScreen(); }), enemies.end());
@@ -393,7 +407,7 @@ void GameWindow::draw() {
             scoreText = "Score: " + std::to_string(score);
 
             // Draw Health Bar
-            currentHealthWidth = static_cast<int>((player.getHp() / 100) * maxHealthWidth);
+            currentHealthWidth = (player.getHp() * maxHealthWidth) / 100;
             al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0));
 
             // Draw text

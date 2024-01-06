@@ -26,7 +26,8 @@ public:
     float getX() const;
     float getY() const;
     int getHp() const { return hp; } // Getter for player's health
-    void hit(int damage); // Method to reduce player's health
+    void getHit(int damage); // Method to reduce player's health
+    const int PLAYER_SIZE = 32;
 private:
     float x, y, dy;
     bool onGround, facingRight;
