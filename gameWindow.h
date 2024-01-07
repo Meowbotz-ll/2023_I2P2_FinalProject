@@ -36,6 +36,7 @@ public:
     bool checkCollision(const Bullet& bullet, const Player& player);
     void game_enemy();
     void game_player();
+    bool checkCollision(const Player& player, const Enemy& enemy);
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
@@ -56,6 +57,9 @@ private:
     double startTime;      // Time when the game started
     double currentTime;    // Current game time
     bool gameSceneInitialized;
+    float back_button_x, back_button_y;  // 返回按鈕位置
+    float exit_button_x, exit_button_y;  // 退出按鈕位置
+    float button_width, button_height;   // 按鈕大小
 };
 
 #endif // GAME_WINDOW_H

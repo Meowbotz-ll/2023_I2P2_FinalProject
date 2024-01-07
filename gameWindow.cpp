@@ -141,6 +141,14 @@ if (!menuMusic || !gameMusic) {
 
     player.init(400, 500,playerGifFiles);
 
+    // 初始化按鈕位置和大小
+    back_button_x = 300;
+    back_button_y = 400;
+    exit_button_x = 500;
+    exit_button_y = 400;
+    button_width = 100;  // 根據需要調整大小
+    button_height = 50;
+
     Log::Info("GameWindow initialization complete");
 }
 
@@ -244,6 +252,7 @@ void GameWindow::run() {
                     Log::Info("Right Mouse Button Clicked");
 
                 }
+                
                 break;
                 case GAME_OVER:
                 if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
@@ -287,7 +296,7 @@ void GameWindow::game_enemy()
             type = EnemyType::AIR;
         } else {
             // 生成地上的敌人
-            spawnY = 500; // 与玩家相同的高度
+            spawnY = 475; // 与玩家相同的高度
             velocityX = 2.0; // 天上敌人速度的两倍
             type = EnemyType::GROUND;
         }
@@ -328,12 +337,19 @@ void GameWindow::game_enemy()
         }
     }
 
-    // 更新全局子弹列表
-    /*for (auto& bullet : bullets) {
-        bullet.update();
-    }*/
-
+    for (auto& enemy : enemies) {
+        enemy.removeInactiveBullets();
+    }
+    //ground
+    for (auto& enemy : enemies) {
+        enemy.update();
+        if (enemy.isAlive() && checkCollision(player, enemy)) {
+            player.getHit(1);
+            enemy.set_Alive(false);
+        }
+    }
 }
+
 
 void GameWindow::game_player()
 {
@@ -372,11 +388,6 @@ void GameWindow::game_player()
         }
     }
 
-    // 移除不再存活或已经离开屏幕的敌人
-    /*enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-        [](const Enemy& enemy) {
-            return !enemy.isAlive() || enemy.isOffScreen();
-        }), enemies.end());*/
 }
 
 bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
@@ -411,6 +422,24 @@ bool GameWindow::checkCollision(const Bullet& bullet, const Player& player) {
     return (playerLeft < bulletRight && playerRight > bulletLeft &&
             playerTop < bulletBottom && playerBottom > bulletTop);
 }
+
+bool GameWindow::checkCollision(const Player& player, const Enemy& enemy) {
+    // 獲取玩家和敵人的位置和大小
+    float playerLeft = player.getX();
+    float playerRight = player.getX() + player.PLAYER_SIZE;
+    float playerTop = player.getY();
+    float playerBottom = player.getY() + player.PLAYER_SIZE;
+
+    float enemyLeft = enemy.get_X();
+    float enemyRight = enemy.get_X() + enemy.ENEMY_SIZE;  // 假設敵人有一個SIZE常量
+    float enemyTop = enemy.get_Y();
+    float enemyBottom = enemy.get_Y() + enemy.ENEMY_SIZE;
+
+    // 檢查矩形是否重疊
+    return !(playerLeft > enemyRight || playerRight < enemyLeft ||
+             playerTop > enemyBottom || playerBottom < enemyTop);
+}
+
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -455,33 +484,16 @@ void GameWindow::draw() {
                     
                 }
             }
-
-            /*for (auto& enemy : enemies) {
-                // 这里只绘制活着的敌人
-                if (enemy.isAlive()) {
-                    enemy.draw();
-
-                // 但是无论敌人是否活着，都绘制其子弹
-                for (auto& bullet : enemy.getBullets()) {
-                    if(bullet.is_Alive()){
-                        if (checkCollision(bullet, player)) continue;
-                        else bullet.draw();
-                    }
-                    
-                    
-                }
-            }
-            }*/
-            
-
-            /*for (auto& bullet : bullets) {
-                bullet.draw();
-            }*/
             break;
 
         case GAME_OVER:
             // Drawing code for game over screen
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
+             // 繪製返回按鈕
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), back_button_x, back_button_y, 0, "Back");
+
+            // 繪製退出按鈕
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), exit_button_x, exit_button_y, 0, "Exit");
             break;
     }
 

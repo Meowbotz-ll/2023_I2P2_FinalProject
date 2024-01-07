@@ -36,6 +36,9 @@ public:
     };  // 获取子弹的方法
     void removeInactiveBullets();
     void clearBullets();
+    float get_X() const;
+    float get_Y() const;
+    const int ENEMY_SIZE = 10;
 
 private:
     float vx, vy; // 新增：敌人的速度
