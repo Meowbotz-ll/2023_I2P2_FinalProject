@@ -9,6 +9,7 @@ void Bullet::update() {
     // 如果子弹是敌人的子弹，且超出屏幕，不设置为不活跃
     if (isEnemyBullet && (x < 0 || x > 800 || y < 0 || y > 600)) {
         // 可能不需要做任何事情
+        
     } else {
         if (x < 0 || x > 800 || y < 0 || y > 600) {
             alive = false;
@@ -24,4 +25,8 @@ void Bullet::draw() {
 
 void Bullet::setAlive(bool status) {
     alive = status;
+}
+
+bool Bullet::is_Alive() const {
+    return alive;
 }

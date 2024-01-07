@@ -46,6 +46,10 @@ bool Enemy::isAlive() const {
     return hp > 0;
 }
 
+void Enemy::set_Alive(bool status) {
+    alive = status;
+}
+
 void Enemy::shootAtPlayer(const Player& player) {
     //static double lastShootTime = 0;
     double shootInterval = 2.0; // 子弹发射间隔，以秒为单位

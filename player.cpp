@@ -8,7 +8,7 @@
 
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
-const int INITIAL_HP = 100; // Initial health points
+const int INITIAL_HP = 1000; // Initial health points
 
 Player::Player() {
     for (int i = 0; i < 4; ++i) {

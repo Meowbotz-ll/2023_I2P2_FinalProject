@@ -34,6 +34,8 @@ public:
     void initGameOverScene();
     void updateGameOverScene();
     bool checkCollision(const Bullet& bullet, const Player& player);
+    void game_enemy();
+    void game_player();
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;

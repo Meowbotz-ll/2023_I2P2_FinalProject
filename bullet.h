@@ -29,6 +29,9 @@ public:
     bool getIsEnemyBullet() const {
         return isEnemyBullet;
     }
+    bool isOffScreen() const { return offScreen; }
+    bool is_Alive() const;
+
 
 private:
     float dx, dy;
@@ -37,4 +40,5 @@ private:
     bool hit; // 新增成员变量，用于跟踪子弹是否已经击中敌人
     int size;
     bool isEnemyBullet;
+    bool offScreen;
 };

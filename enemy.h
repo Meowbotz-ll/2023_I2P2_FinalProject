@@ -25,6 +25,7 @@ public:
     void draw();
     void hit(int damage);
     bool isAlive() const;
+    void set_Alive(bool status); 
     static const int RADIUS = 10;
     bool isOffScreen() const { return offScreen; }
     void shootAtPlayer(const Player &player);
