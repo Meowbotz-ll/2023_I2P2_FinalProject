@@ -70,9 +70,9 @@ void MODE::show_MODE() {
 
 void MODE::init() {
     // Load different music for each mode
-    modeMusicSamples[MODE_GROUND] = al_load_sample("ground_mode_music.mp3");
-    modeMusicSamples[MODE_AIR] = al_load_sample("air_mode_music.mp3");
-    modeMusicSamples[MODE_BOTH] = al_load_sample("both_mode_music.mp3");
+    modeMusicSamples[MODE_GROUND] = al_load_sample("1.mp3");
+    modeMusicSamples[MODE_AIR] = al_load_sample("2.mp3");
+    modeMusicSamples[MODE_BOTH] = al_load_sample("4.mp3");
 
     // Check for loading errors
     for (auto &pair : modeMusicSamples) {
@@ -127,14 +127,14 @@ void MODE::setup_buttons() {
 
 void MODE::load_mode_images() {
     // 載入模式圖片
-    mode1Image = al_load_bitmap("mode1.png");
-    mode2Image = al_load_bitmap("mode2.jpg");
-    mode3Image = al_load_bitmap("mode3.png");
+    mode1Image = al_load_bitmap("1.jpg");
+    mode2Image = al_load_bitmap("2.jpg");
+    mode3Image = al_load_bitmap("3.png");
 }
 
 void MODE::draw_mode_background() {
     // 繪製背景圖
-    ALLEGRO_BITMAP* MODE_background = al_load_bitmap("MODE_background.jpg");
+    ALLEGRO_BITMAP* MODE_background = al_load_bitmap("4.jpg");
     al_draw_scaled_bitmap(MODE_background, 0, 0, al_get_bitmap_width(MODE_background), al_get_bitmap_height(MODE_background),
         0, 0, al_get_display_width(display), al_get_display_height(display), 0);
 }
@@ -158,14 +158,14 @@ void MODE::draw_back_button() {
 
 void MODE::play_mode_music() {
     // 播放背景音樂
-    ALLEGRO_SAMPLE* backgroundSample = al_load_sample("MODE.mp3");
+    ALLEGRO_SAMPLE* backgroundSample = al_load_sample("3.mp3");
     modeMusic = al_create_sample_instance(backgroundSample);
     al_set_sample_instance_playmode(modeMusic, ALLEGRO_PLAYMODE_LOOP);
     al_attach_sample_instance_to_mixer(modeMusic, al_get_default_mixer());
     al_play_sample_instance(modeMusic);
 }
 
-void MODE::choose_MODE(GameMode &curretMode) {
+void MODE::choose_MODE() {
     bool running = true;
 
     while (running) {
@@ -199,12 +199,21 @@ void MODE::choose_MODE(GameMode &curretMode) {
     // After mode selection
     switch (selectedMode) {
         case MODE_GROUND:
+            window.game_enemy();
+            window.game_player();
+            window.currentState = GAME;
         case MODE_AIR:
+            window.game_enemy();
+            window.game_player();
+            window.currentState = GAME;
         case MODE_BOTH:
-            playModeMusic(selectedMode); // Play music corresponding to the selected mode
+            window.game_enemy();
+            window.game_player();
+            window.currentState = GAME;
+            //playModeMusic(selectedMode); // Play music corresponding to the selected mode
             break;
         case RETURN:
-            menu.draw();
+            window.currentState = MENU;
     }
 
 }

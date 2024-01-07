@@ -5,6 +5,7 @@
 #include "global.h"
 #include "bullet.h"
 #include "enemy.h"
+#include "mode.h"
 #include "log.h"
 #include "allegro_setup.h"
 #include <string>
@@ -12,6 +13,7 @@
 #include <sstream> // Include this header for ostringstream
 #include <iomanip>
 #include "menu.h"
+
 
 enum GameState {
     MENU,
@@ -38,14 +40,15 @@ public:
     void game_enemy();
     void game_player();
     bool checkCollision(const Player& player, const Enemy& enemy);
-    void selectMode(GameMode &currentMode);
+    GameMode selectMode();
+    GameState currentState;
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
     Player player;
     std::vector<Enemy> enemies;  // 敌人的容器
     std::vector<Bullet> bullets;  // 将其作为成员变量
-    GameState currentState;
+    //GameState currentState;
     GameState previousState;
     ALLEGRO_FONT* font;
     ALLEGRO_SAMPLE *menuMusic;
@@ -62,6 +65,8 @@ private:
     float back_button_x, back_button_y;  // 返回按鈕位置
     float exit_button_x, exit_button_y;  // 退出按鈕位置
     float button_width, button_height;   // 按鈕大小
+    //GameMode selectMode;
+    MODE mode;
 };
 
 #endif // GAME_WINDOW_H

@@ -2,7 +2,7 @@
 #include "log.h"  // Include your log class
 #include "algorithm"
 #include "bullet.h"
-#include "mode.h"
+#include "global.h"
 
 
 #include <iterator>
@@ -156,6 +156,10 @@ if (!menuMusic || !gameMusic) {
 void GameWindow::initMenuScene()
 {
     Log::Info("Menu Scene Initialized");
+    if (key_state[ALLEGRO_KEY_ENTER]) {
+        // 在這裡添加進入模式選擇的操作
+        currentState = MODE_SELECTION;
+    }
 }
 void GameWindow::initGameOverScene() {
     // Add your game over scene initialization code here
@@ -187,6 +191,8 @@ void GameWindow::initScene() {
             case GAME:
                 initGameScene();  // Initialize game-specific resources
                 break;
+            case MODE_SELECTION:
+                break;
             case GAME_OVER:
 
                 break;
@@ -210,8 +216,8 @@ void GameWindow::run() {
                     if (ev.keyboard.keycode == ALLEGRO_KEY_ENTER) {
                         Log::Info("Enter Key Pressed - Switching to Game State"); // Debug message for pressing Enter
                         al_stop_samples(); // Stop any currently playing music
-                        currentState = GAME;
-                        menu.gameStart = true; // Update the flag in menu
+                        currentState = MODE_SELECTION;
+                        //menu.gameStart = true; // Update the flag in menu
                     }
                 }
                 menu.update();
@@ -255,12 +261,13 @@ void GameWindow::run() {
                 }
                 
                 break;
-                case MODE_SELECTION:
+                /*case MODE_SELECTION:
                     GameMode selectedMode;
                     selectMode(selectedMode);
                     // Set game parameters based on selectedMode
                     currentState = GAME;
-                    break;
+                    menu.gameStart = true;
+                    break;*/
                 case GAME_OVER:
                 if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
                     Log::Info("Escape Clicked");
@@ -272,7 +279,13 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
+        case MODE_SELECTION:
+            GameMode selectedMode;
+            mode.show_MODE();
+            mode.choose_MODE(); // Assuming this method sets the selectedMode
 
+            
+        break;
         
         case GAME_OVER:
             
@@ -493,6 +506,10 @@ void GameWindow::draw() {
             }
             break;
 
+        case MODE_SELECTION:
+
+            break;
+
         case GAME_OVER:
             // Drawing code for game over screen
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
@@ -507,26 +524,5 @@ void GameWindow::draw() {
     al_flip_display();
 }
 
-
-
-void MODE::choose_MODE(GameMode &currentMode) {
-    // ... existing code ...
-
-    // After mode selection
-    switch (selectedMode) {
-        case MODE_GROUND:
-            // Set parameters for ground mode
-            break;
-        case MODE_AIR:
-            // Set parameters for air mode
-            break;
-        case MODE_BOTH:
-            // Set parameters for both modes
-            break;
-        case RETURN:
-            // Handle return action
-            break;
-    }
-}
 
 

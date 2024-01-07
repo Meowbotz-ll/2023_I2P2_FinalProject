@@ -367,6 +367,7 @@ File: .\gameWindow.cpp
 #include "algorithm"
 #include "bullet.h"
 #include "mode.h"
+#include "global.h"
 
 
 #include <iterator>
@@ -520,6 +521,10 @@ if (!menuMusic || !gameMusic) {
 void GameWindow::initMenuScene()
 {
     Log::Info("Menu Scene Initialized");
+    if (key_state[ALLEGRO_KEY_ENTER]) {
+        // 在這裡添加進入模式選擇的操作
+        currentState = MODE_SELECTION;
+    }
 }
 void GameWindow::initGameOverScene() {
     // Add your game over scene initialization code here
@@ -551,6 +556,8 @@ void GameWindow::initScene() {
             case GAME:
                 initGameScene();  // Initialize game-specific resources
                 break;
+            case MODE_SELECTION:
+                break;
             case GAME_OVER:
 
                 break;
@@ -574,8 +581,8 @@ void GameWindow::run() {
                     if (ev.keyboard.keycode == ALLEGRO_KEY_ENTER) {
                         Log::Info("Enter Key Pressed - Switching to Game State"); // Debug message for pressing Enter
                         al_stop_samples(); // Stop any currently playing music
-                        currentState = GAME;
-                        menu.gameStart = true; // Update the flag in menu
+                        currentState = MODE_SELECTION;
+                        //menu.gameStart = true; // Update the flag in menu
                     }
                 }
                 menu.update();
@@ -619,12 +626,13 @@ void GameWindow::run() {
                 }
                 
                 break;
-                case MODE_SELECTION:
+                /*case MODE_SELECTION:
                     GameMode selectedMode;
                     selectMode(selectedMode);
                     // Set game parameters based on selectedMode
                     currentState = GAME;
-                    break;
+                    menu.gameStart = true;
+                    break;*/
                 case GAME_OVER:
                 if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
                     Log::Info("Escape Clicked");
@@ -636,7 +644,19 @@ void GameWindow::run() {
 
             // Add additional cases here for other types of events
         }
-
+        case MODE_SELECTION:
+            GameMode selectedMode;
+            mode.show_MODE();
+            mode.choose_MODE(); // Assuming this method sets the selectedMode
+            /*if (selectedMode != RETURN) {
+                currentState = GAME;
+                // Initialize game based on selected mode
+                // Initialize game logic here...
+            } else {
+                currentState = MENU;
+            }*/
+            
+        break;
         
         case GAME_OVER:
             
@@ -857,6 +877,10 @@ void GameWindow::draw() {
             }
             break;
 
+        case MODE_SELECTION:
+
+            break;
+
         case GAME_OVER:
             // Drawing code for game over screen
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
@@ -872,26 +896,21 @@ void GameWindow::draw() {
 }
 
 
+/*GameMode GameWindow::selectMode() {
+    // 實現 selectMode 函數的內容
+    // ...
+    return selectedMode;
+}*/
 
-void MODE::choose_MODE(GameMode &currentMode) {
-    // ... existing code ...
 
-    // After mode selection
-    switch (selectedMode) {
-        case MODE_GROUND:
-            // Set parameters for ground mode
-            break;
-        case MODE_AIR:
-            // Set parameters for air mode
-            break;
-        case MODE_BOTH:
-            // Set parameters for both modes
-            break;
-        case RETURN:
-            // Handle return action
-            break;
-    }
-}
+
+/*void GameWindow::selectMode(GameMode& mode) {
+    // 實現 selectMode 函數的內容
+    currentState = GAME;
+    mode = selectMode;
+
+}*/
+
 
 
 ============== 
@@ -1372,6 +1391,13 @@ File: .\mode.cpp
 
 #include "gameWindow.h"
 
+#include <allegro5/allegro_audio.h>
+#include <map>
+#include <string>
+
+// Define a map to hold music samples for each mode
+std::map<GameMode, ALLEGRO_SAMPLE*> modeMusicSamples;
+
 ALLEGRO_BITMAP* mode1Image;
 ALLEGRO_BITMAP* mode2Image;
 ALLEGRO_BITMAP* mode3Image;
@@ -1393,10 +1419,10 @@ BUTTON MODE2Button;
 BUTTON MODE3Button;
 BUTTON backButton2;
 
-enum GameMode seletedMode = MODE_GROUND;
+//enum GameMode seletedMode = MODE_GROUND;
 
 // Constructor
-MODE::MODE() : seletedMode(MODE_GROUND) {
+MODE::MODE() : selectedMode(MODE_GROUND) {
     // Initialize mode images and music to nullptr
     mode1Image = nullptr;
     mode2Image = nullptr;
@@ -1410,7 +1436,8 @@ MODE::~MODE() {
     if (mode1Image) al_destroy_bitmap(mode1Image);
     if (mode2Image) al_destroy_bitmap(mode2Image);
     if (mode3Image) al_destroy_bitmap(mode3Image);
-    if (modeMusic) al_destroy_sample_instance(modeMusic);
+    //if (modeMusic) al_destroy_sample_instance(modeMusic);
+    cleanup();
 }
 
 void MODE::show_MODE() {
@@ -1419,12 +1446,42 @@ void MODE::show_MODE() {
 
     load_mode_images(); 
     draw_mode_background(); 
-    draw_mode_buttons(); 
+    draw_mode_button(); 
     draw_back_button(); 
 
     play_mode_music(); 
 
     al_flip_display();
+}
+
+void MODE::init() {
+    // Load different music for each mode
+    modeMusicSamples[MODE_GROUND] = al_load_sample("1.mp3");
+    modeMusicSamples[MODE_AIR] = al_load_sample("2.mp3");
+    modeMusicSamples[MODE_BOTH] = al_load_sample("4.mp3");
+
+    // Check for loading errors
+    for (auto &pair : modeMusicSamples) {
+        if (!pair.second) {
+            Log::Error("Failed to load music for mode: " + std::to_string(pair.first));
+        }
+    }
+}
+
+void MODE::cleanup() {
+    // Destroy all loaded samples
+    for (auto &pair : modeMusicSamples) {
+        if (pair.second) {
+            al_destroy_sample(pair.second);
+        }
+    }
+}
+
+void MODE::playModeMusic(GameMode mode) {
+    ALLEGRO_SAMPLE *sample = modeMusicSamples[mode];
+    if (sample) {
+        al_play_sample(sample, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, nullptr);
+    }
 }
 
 void MODE::setup_buttons() {
@@ -1456,14 +1513,14 @@ void MODE::setup_buttons() {
 
 void MODE::load_mode_images() {
     // 載入模式圖片
-    mode1Image = al_load_bitmap("mode1.png");
-    mode2Image = al_load_bitmap("mode2.jpg");
-    mode3Image = al_load_bitmap("mode3.png");
+    mode1Image = al_load_bitmap("1.jpg");
+    mode2Image = al_load_bitmap("2.jpg");
+    mode3Image = al_load_bitmap("3.png");
 }
 
 void MODE::draw_mode_background() {
     // 繪製背景圖
-    ALLEGRO_BITMAP* MODE_background = al_load_bitmap("MODE_background.jpg");
+    ALLEGRO_BITMAP* MODE_background = al_load_bitmap("4.jpg");
     al_draw_scaled_bitmap(MODE_background, 0, 0, al_get_bitmap_width(MODE_background), al_get_bitmap_height(MODE_background),
         0, 0, al_get_display_width(display), al_get_display_height(display), 0);
 }
@@ -1487,14 +1544,14 @@ void MODE::draw_back_button() {
 
 void MODE::play_mode_music() {
     // 播放背景音樂
-    ALLEGRO_SAMPLE* backgroundSample = al_load_sample("MODE.mp3");
+    ALLEGRO_SAMPLE* backgroundSample = al_load_sample("3.mp3");
     modeMusic = al_create_sample_instance(backgroundSample);
     al_set_sample_instance_playmode(modeMusic, ALLEGRO_PLAYMODE_LOOP);
     al_attach_sample_instance_to_mixer(modeMusic, al_get_default_mixer());
     al_play_sample_instance(modeMusic);
 }
 
-void MODE::choose_MODE(GameMode &curretMode) {
+void MODE::choose_MODE() {
     bool running = true;
 
     while (running) {
@@ -1525,22 +1582,24 @@ void MODE::choose_MODE(GameMode &curretMode) {
             }
         }
     }
-    switch(seletedMode){
-        case MODE_AIR:
-            al_stop_sample_instance(MODEMusic);
-            newBackgroundSample = al_load_sample("mixkit-comical-2.mp3"); //加載背景音樂
-            newBackgroundMusic = al_create_sample_instance(newBackgroundSample);
+    // After mode selection
+    switch (selectedMode) {
         case MODE_GROUND:
-            al_stop_sample_instance(MODEMusic);
-            newBackgroundSample = al_load_sample("city.mp3"); //加載背景音樂
-            newBackgroundMusic = al_create_sample_instance(newBackgroundSample);
+            window.game_enemy();
+            window.game_player();
+            window.currentState = GAME;
+        case MODE_AIR:
+            window.game_enemy();
+            window.game_player();
+            window.currentState = GAME;
         case MODE_BOTH:
-            al_stop_sample_instance(MODEMusic);
-            newBackgroundSample = al_load_sample("sea.mp3"); //加載背景音樂
-            newBackgroundMusic = al_create_sample_instance(newBackgroundSample);
+            window.game_enemy();
+            window.game_player();
+            window.currentState = GAME;
+            //playModeMusic(selectedMode); // Play music corresponding to the selected mode
+            break;
         case RETURN:
-            al_stop_sample_instance(MODEMusic);
-            menu.draw();
+            window.currentState = MENU;
     }
 
 }
