@@ -254,6 +254,12 @@ void GameWindow::run() {
                 }
                 
                 break;
+                case MODE_SELECTION:
+                    GameMode selectedMode;
+                    selectGameMode(selectedMode);
+                    // Set game parameters based on selectedMode
+                    currentState = GAME;
+                    break;
                 case GAME_OVER:
                 if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
                     Log::Info("Escape Clicked");

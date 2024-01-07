@@ -15,6 +15,7 @@
 
 enum GameState {
     MENU,
+    MODE_SELECTION,
     GAME,
     GAME_OVER
 };
