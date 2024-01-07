@@ -95,6 +95,10 @@ const char* playerGifFiles[2] = {
         "player_img/skeleton_left.gif",   // Replace with actual file path
         "player_img/skeleton_right.gif",  // Replace with actual file path
     };
+    enemyGif[0] = "enemy_gif/flying.gif";
+    enemyGif[1] = "enemy_gif/walking_r.gif";
+    enemyGif[2] = "enemy_gif/walking_l.gif";
+    enemyGif[3] = "enemy_gif/walking_r.gif";
 
 // Log the loading of each GIF file
     for (int i = 0; i < 2; ++i) {
@@ -296,8 +300,8 @@ void GameWindow::game_enemy()
             type = EnemyType::AIR;
         } else {
             // 生成地上的敌人
-            spawnY = 475; // 与玩家相同的高度
-            velocityX = 2.0; // 天上敌人速度的两倍
+            spawnY = 460; // 与玩家相同的高度
+            velocityX = 1.0; // 天上敌人速度的两倍
             type = EnemyType::GROUND;
         }
 
@@ -311,7 +315,7 @@ void GameWindow::game_enemy()
         }
 
         // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type));
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     // 遍历所有敌人

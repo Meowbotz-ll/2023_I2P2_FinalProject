@@ -50,6 +50,7 @@ private:
     ALLEGRO_SAMPLE *gameMusic;
     ALLEGRO_BITMAP *backgroundImage;
     Menu menu;
+    const char* enemyGif[4];
     bool doexit;
     void update();
     ALLEGRO_FONT* ui_font; // Font for drawing UI text

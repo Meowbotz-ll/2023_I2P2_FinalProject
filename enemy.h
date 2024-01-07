@@ -20,7 +20,7 @@ public:
     float x, y;
     int hp;  // 默认的敌人生命值
     //EnemyType type;
-    Enemy(float x, float y, float vx, EnemyType type);
+    Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4]);
     void update();
     void draw();
     void hit(int damage);
@@ -48,7 +48,7 @@ private:
     EnemyType type;
     std::vector<Bullet> bullets;  // 将其作为成员变量
     double lastShootTime;
-    
+    ALGIF_ANIMATION *walkingGif[4];
 };
 
 

@@ -1,11 +1,18 @@
 #include "Enemy.h"
 #include "player.h"
-
+#include "log.h"
 #include <cmath>
 #include <algorithm>
 
-Enemy::Enemy(float x, float y, float vx, EnemyType type) 
-    : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false), type(type), lastShootTime(0) {}
+Enemy::Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4]) 
+    : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false), type(type), lastShootTime(0) {
+        for(int i = 0; i < 4; i++) {
+        walkingGif[i] = algif_load_animation(gifFile[i]);
+        if (!walkingGif[i]) {
+            Log::Error("Failed to load GIF: " + std::string(gifFile[i]));
+        }
+    }
+    }
 
 
 void Enemy::update() {
@@ -26,8 +33,25 @@ void Enemy::update() {
 
 void Enemy::draw() {
     if(!alive) return;
-    ALLEGRO_COLOR color = (type == AIR) ? al_map_rgb(173, 216, 230) : al_map_rgb(255, 165, 0);
-    al_draw_filled_circle(x, y, RADIUS, color); // 根据类型绘制不同颜色的圆
+    //ALLEGRO_COLOR color = (type == AIR) ? al_map_rgb(173, 216, 230) : al_map_rgb(255, 165, 0);
+    //al_draw_filled_circle(x, y, RADIUS, color); // 根据类型绘制不同颜色的圆
+    ALLEGRO_BITMAP* frameBitmap = (type == AIR) ? algif_get_bitmap(walkingGif[0], al_get_time()):algif_get_bitmap(walkingGif[1], al_get_time());
+    if(type==GROUND&&vx<0)
+    {
+        frameBitmap=algif_get_bitmap(walkingGif[2], al_get_time());
+    }
+     if (frameBitmap) {
+        // Get the dimensions of the bitmap
+        int bitmapWidth = al_get_bitmap_width(frameBitmap);
+        int bitmapHeight = al_get_bitmap_height(frameBitmap);
+
+        // Calculate the position to draw the bitmap so that it's centered on the player's coordinates
+        float drawX = x - bitmapWidth / 2.0f;
+        float drawY = y - bitmapHeight / 2.0f;
+
+        // Draw the bitmap
+        al_draw_bitmap(frameBitmap, drawX, drawY, 0);
+    }
     // Draw each bullet
     for (auto& bullet : bullets) {
         bullet.draw();
@@ -36,7 +60,7 @@ void Enemy::draw() {
 
 
 void Enemy::hit(int damage) {
-    hp -= damage;
+    hp -= damage; 
     if (hp <= 0) {
         alive = false; // 標記敵人為死亡，不再繪製或更新
     }
@@ -74,7 +98,7 @@ void Enemy::shootAtPlayer(const Player& player) {
 
         // 发射子弹的逻辑
         if (type == AIR) {
-            float dx = player.getX() - x;
+            float dx = player.getX() - x; 
             float dy = player.getY() - y;
             float distance = sqrt(dx * dx + dy * dy);
             dx /= distance;
@@ -93,7 +117,7 @@ void Enemy::shootAtPlayer(const Player& player) {
 
 void Enemy::drawBullets() {
     if(type == AIR) {
-    al_draw_filled_rectangle(x, y, x + 10, y + 10, al_map_rgb(255, 255, 255));
+    al_draw_filled_circle(x, y, 15, al_map_rgb(255, 255, 255));
     }
 }
 
