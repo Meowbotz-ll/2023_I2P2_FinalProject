@@ -2,6 +2,7 @@
 #include "log.h"  // Include your log class
 #include "algorithm"
 #include "bullet.h"
+#include "mode.h"
 
 
 #include <iterator>
@@ -256,7 +257,7 @@ void GameWindow::run() {
                 break;
                 case MODE_SELECTION:
                     GameMode selectedMode;
-                    selectGameMode(selectedMode);
+                    selectMode(selectedMode);
                     // Set game parameters based on selectedMode
                     currentState = GAME;
                     break;
@@ -505,4 +506,27 @@ void GameWindow::draw() {
 
     al_flip_display();
 }
+
+
+
+void MODE::choose_MODE(GameMode &currentMode) {
+    // ... existing code ...
+
+    // After mode selection
+    switch (selectedMode) {
+        case MODE_GROUND:
+            // Set parameters for ground mode
+            break;
+        case MODE_AIR:
+            // Set parameters for air mode
+            break;
+        case MODE_BOTH:
+            // Set parameters for both modes
+            break;
+        case RETURN:
+            // Handle return action
+            break;
+    }
+}
+
 

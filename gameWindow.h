@@ -38,6 +38,7 @@ public:
     void game_enemy();
     void game_player();
     bool checkCollision(const Player& player, const Enemy& enemy);
+    void selectMode(GameMode &currentMode);
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
