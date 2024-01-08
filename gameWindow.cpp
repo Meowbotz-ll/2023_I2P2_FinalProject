@@ -340,6 +340,19 @@ void GameWindow::run() {
         al_wait_for_event(event_queue, &ev);
         initScene();
         checkBombCooldown();
+        if(ev.type==ALLEGRO_EVENT_DISPLAY_CLOSE)
+        {
+                doexit = true;
+        }
+        if (ev.type == ALLEGRO_EVENT_KEY_UP)
+        {
+        if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+                    Log::Info("Escape Key Pressed - Switching to Menu State"); // Debug message for pressing Escape
+                    al_stop_samples(); // Stop any currently playing music
+                    currentState = MENU;
+                }
+        }
+
         switch (currentState) {
             case MENU:
             //Log::Info("In Menu State");
