@@ -244,7 +244,7 @@ void GameWindow::initGameScene()
         Log::Info("Game Reset");
         if(backgroundImage!=nullptr)
         {
-        al_draw_bitmap(backgroundImage, 0, 0, 0);
+        //al_draw_bitmap(backgroundImage, 0, 0, 0);
         Log::Info("Background Init");
         }
         gameSceneInitialized=true;
@@ -684,21 +684,6 @@ bool GameWindow::checkCollision(const Player& player, const Enemy& enemy) {
              playerTop > enemyBottom || playerBottom < enemyTop);
 }
 
-// 修改遊戲循環的一部分以更新 GIF
-/*void GameWindow::background_draw() {
-    //ALGIF_ANIMATION * backgroundGIF = algif_load_animation("img/background.gif");
-    ALLEGRO_BITMAP* frameBitmap = algif_get_bitmap(backgroundGIF, al_get_time());
-    if (frameBitmap) {
-        // Get the dimensions of the display
-        int screenWidth = al_get_display_width(display);
-        int screenHeight = al_get_display_height(display);
-
-        // Draw the bitmap to cover the entire screen
-        al_draw_bitmap(frameBitmap, 0, 0, 0);
-    }
-}*/
-
-
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
 
@@ -719,6 +704,7 @@ void GameWindow::draw() {
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 200, ALLEGRO_ALIGN_CENTER, "Press 1 to choose Ground Level");
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 250, ALLEGRO_ALIGN_CENTER, "Press 2 to choose Sky Level");
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "Press 3 to choose Hard Level");
+            al_flip_display();
             break;
 
         case GAME:
@@ -727,8 +713,16 @@ void GameWindow::draw() {
                 al_draw_bitmap(backgroundImage, 0, 0, 0);
             }*/
 
+            al_draw_bitmap(backgroundImage, 0, 0, 0);
+            al_flip_display();
 
-            //al_draw_bitmap(backgroundImage, 0, 0, 0);
+            // 繪製背景
+            /*al_draw_scaled_bitmap(backgroundImage, 0, 0, al_get_bitmap_width(backgroundImage), al_get_bitmap_height(backgroundImage),
+                800, 0, al_get_bitmap_width(backgroundImage), 600, 0);
+
+            // 繪製背景的副本以實現循環重複
+            al_draw_scaled_bitmap(backgroundImage, 0, 0, al_get_bitmap_width(backgroundImage), al_get_bitmap_height(backgroundImage),
+                800 + al_get_bitmap_width(backgroundImage), 0, al_get_bitmap_width(backgroundImage), 600, 0);*/
             currentTime = static_cast<int>(al_get_time() - startTime);
             timeStream << "Time: " << currentTime;
             timeText = timeStream.str();
@@ -784,7 +778,7 @@ void GameWindow::draw() {
 
     }
 
-    al_flip_display();
+    //al_flip_display();
 }
 
 
