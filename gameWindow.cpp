@@ -225,7 +225,7 @@ void GameWindow::run() {
 
             switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
-                game_enemy();
+                mode3();
                 game_player();
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -282,7 +282,103 @@ void GameWindow::run() {
     }
 }
 
-void GameWindow::game_enemy()
+void GameWindow::mode1()
+{
+    static double last_spawn_time = 0;
+    static double enemySpawnInterval = 2.0;     
+    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+        last_spawn_time = al_get_time();
+        float spawnY;
+        float velocityX;
+        EnemyType type;
+
+        // 生成地上的敌人
+        spawnY = 460; // 与玩家相同的高度
+        velocityX = 1.0; // 天上敌人速度的两倍
+        type = EnemyType::GROUND;
+    
+
+        // 随机决定敌人从左侧或右侧出现
+        float spawnX;
+        if (rand() % 2 == 0) {
+            spawnX = -1; // 从屏幕左侧出现
+        } else {
+            spawnX = 801; // 从屏幕右侧出现
+            velocityX = -velocityX; // 改变移动方向
+        }
+
+        // 添加敌人到列表
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+    }
+    //ground
+    for (auto& enemy : enemies) {
+        enemy.update();
+        if (enemy.isAlive() && checkCollision(player, enemy)) {
+            player.getHit(1);
+            enemy.set_Alive(false);
+        }
+    }
+}
+
+void GameWindow::mode2()
+{
+    static double last_spawn_time = 0;
+    static double enemySpawnInterval = 5.0;     
+    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+        last_spawn_time = al_get_time();
+        float spawnY;
+        float velocityX;
+        EnemyType type;
+
+        // 生成天上的敌人
+        spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
+        velocityX = 1.0; // 初始速度
+        type = EnemyType::AIR;
+
+        // 随机决定敌人从左侧或右侧出现
+        float spawnX;
+        if (rand() % 2 == 0) {
+            spawnX = -1; // 从屏幕左侧出现
+        } else {
+            spawnX = 801; // 从屏幕右侧出现
+            velocityX = -velocityX; // 改变移动方向
+        }
+
+        // 添加敌人到列表
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+    }
+    // 遍历所有敌人
+    for (auto& enemy : enemies) {
+        enemy.update(); // 更新敌人位置和状态
+        // 如果敌人是天空中的敌人，则射击玩家
+        if (enemy.getType() == EnemyType::AIR) {
+            enemy.shootAtPlayer(player); // 让敌人射击玩家
+        }
+        // 遍历天空敌人的子弹并保持它们永远活跃
+            for (auto& bullet : enemy.getBullets()) {
+                bullet.setAlive(true);
+            }
+    }
+
+    for (auto& enemy : enemies) {
+        for (auto& bullet : enemy.getBullets()) {
+            bullet.setAlive(true);
+            if (checkCollision(bullet, player)) {
+                player.getHit(1);
+                bullet.setAlive(false); // Remove the bullet upon collision
+            }
+        }
+    }
+
+    for (auto& enemy : enemies) {
+        enemy.removeInactiveBullets();
+    }
+    
+}
+
+void GameWindow::mode3()
 {
     static double last_spawn_time = 0;
     static double enemySpawnInterval = 2.0;     
