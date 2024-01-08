@@ -310,7 +310,6 @@ void GameWindow::initScene() {
                 break;
             case GAME_OVER:
                 updateLeaderBoard();
-                resetGame();
                 Log::Info("Updated High score! "+std::to_string(score)+".");
                 gameSceneInitialized=false;
                 break;
@@ -602,7 +601,7 @@ void GameWindow::mode3()
 
         // 添加敌人到列表
         enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
-        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+        enemySpawnInterval = std::max(0.7, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     ground_enemy();
     sky_enemy();
