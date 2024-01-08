@@ -7,6 +7,11 @@
 #include <iterator>
 using namespace std;
 
+// 在GameWindow類中添加以下成員變量
+const int NUM_MODES = 3;  // 定義模式的數量
+ALLEGRO_BITMAP* modeSelectionImages[NUM_MODES];  // 保存模式選擇界面的圖片
+int selectedMode = -1;  // 被選擇的模式，初始值為-1表示未選擇
+
 GameWindow::GameWindow() : currentState(MENU),previousState(MENU),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
     Log::Info("GameWindow Created");
     init();
@@ -160,6 +165,16 @@ void GameWindow::initMenuScene()
 {
     Log::Info("Menu Scene Initialized");
 }
+
+void GameWindow::initModeSelectionScene() {
+    for (int i = 0; i < NUM_MODES; ++i) {
+        // 根據實際需求替換下面的路徑
+        modeSelectionImages[i] = al_load_bitmap(("img/mode" + std::to_string(i + 1) + ".jpg").c_str());
+        // 設置模式選擇界面的位置，這裡假設每個模式圖片的寬度為100
+        al_draw_bitmap(modeSelectionImages[i], i * 100, 0, 0);
+    }
+}
+
 void GameWindow::initGameOverScene() {
     // Add your game over scene initialization code here
     Log::Info("Game Over Scene Initialized");
@@ -187,6 +202,9 @@ void GameWindow::initScene() {
             case MENU:
                 initMenuScene();  // Initialize menu-specific resources
                 break;
+            case MODE_SELECTION:
+                initModeSelectionScene();
+                break;
             case GAME:
                 initGameScene();  // Initialize game-specific resources
                 break;
@@ -213,11 +231,40 @@ void GameWindow::run() {
                     if (ev.keyboard.keycode == ALLEGRO_KEY_ENTER) {
                         Log::Info("Enter Key Pressed - Switching to Game State"); // Debug message for pressing Enter
                         al_stop_samples(); // Stop any currently playing music
-                        currentState = GAME;
-                        menu.gameStart = true; // Update the flag in menu
+                        //currentState = GAME;
+                        currentState = MODE_SELECTION;
+                        //menu.gameStart = true; // Update the flag in menu
                     }
                 }
                 menu.update();
+                break;
+                    
+            case MODE_SELECTION:
+                if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
+                    // Check which mode image was clicked and switch to that mode
+                    // For example:
+                    // if (clicked on mode 1 image) {
+                    //     currentState = GAME;  // or another specific mode
+                    // }
+                    // 根據鼠標點擊的位置判斷選擇的模式
+                    int mouseX = ev.mouse.x;
+                    int mouseY = ev.mouse.y;
+                    selectedMode = mouseX / 100;  // 假設每個模式圖片的寬度為100
+                    Log::Info("Selected Mode: " + std::to_string(selectedMode + 1));
+                    // 在此添加根據選擇的模式進行相應處理的代碼
+                    switch (selectedMode) {
+                        case MODE_1:
+                            currentState = GAME;
+                            break;
+                        case MODE_2:
+                            currentState = GAME;
+                            break;
+                        case MODE_3:
+                            currentState = GAME;
+                            break;
+                    }
+                }
+                // ... other code
                 break;
 
             case GAME:
@@ -225,8 +272,18 @@ void GameWindow::run() {
 
             switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
-                mode2();
-                game_player();
+                switch(selectedMode){
+                    case MODE_1:
+                        mode1();
+                        game_player();
+                    case MODE_2:
+                        mode2();
+                        game_player();
+                    case MODE_3:
+                        mode3();
+                        game_player();
+                }
+                    
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -311,14 +368,7 @@ void GameWindow::mode1()
         enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
-    //ground
-    for (auto& enemy : enemies) {
-        enemy.update();
-        if (enemy.isAlive() && checkCollision(player, enemy)) {
-            player.getHit(1);
-            enemy.set_Alive(false);
-        }
-    }
+    ground_enemy();
 }
 
 void GameWindow::mode2()
@@ -349,37 +399,11 @@ void GameWindow::mode2()
         enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
-    // 遍历所有敌人
-    /*for (auto& enemy : enemies) {
-        enemy.update(); // 更新敌人位置和状态
-        // 如果敌人是天空中的敌人，则射击玩家
-        if (enemy.getType() == EnemyType::AIR) {
-            enemy.shootAtPlayer(player); // 让敌人射击玩家
-        }
-        // 遍历天空敌人的子弹并保持它们永远活跃
-            for (auto& bullet : enemy.getBullets()) {
-                bullet.setAlive(enemy.isAlive());
-            }
-    }
+    sky_enemy();
+}
 
-    for (auto& enemy : enemies) {
-        for (auto& bullet : enemy.getBullets()) {
-            bullet.setAlive(true);
-            if (bullet.is_Alive() && checkCollision(bullet, player)) {
-                player.getHit(1);
-                bullet.setAlive(false); // Remove the bullet upon collision
-                enemy.removeInactiveBullets();
-            }
-        }
-    }
-
-    for (auto& enemy : enemies) {
-        enemy.removeInactiveBullets();
-    }
-    // 删除死亡敌人的子弹
-    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-                     [](const Enemy& enemy) { return !enemy.isAlive(); }),
-                     enemies.end());*/
+void GameWindow::sky_enemy()
+{
     for (auto& enemy : enemies) {
         enemy.update(); // 更新敌人位置和状态
 
@@ -405,12 +429,17 @@ void GameWindow::mode2()
     for (auto& enemy : enemies) {
         enemy.removeInactiveBullets();
     }
+}
 
-    // 删除所有已死亡的敌人
-    /*enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
-                     [](const Enemy& enemy) { return !enemy.isAlive(); }),
-                     enemies.end());*/
-    
+void GameWindow::ground_enemy()
+{
+    for (auto& enemy : enemies) {
+        enemy.update();
+        if (enemy.isAlive() && checkCollision(player, enemy)) {
+            player.getHit(1);
+            enemy.set_Alive(false);
+        }
+    }
 }
 
 void GameWindow::mode3()
@@ -449,40 +478,8 @@ void GameWindow::mode3()
         enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
-    // 遍历所有敌人
-    for (auto& enemy : enemies) {
-        enemy.update(); // 更新敌人位置和状态
-        // 如果敌人是天空中的敌人，则射击玩家
-        if (enemy.getType() == EnemyType::AIR) {
-            enemy.shootAtPlayer(player); // 让敌人射击玩家
-        }
-        // 遍历天空敌人的子弹并保持它们永远活跃
-            for (auto& bullet : enemy.getBullets()) {
-                bullet.setAlive(true);
-            }
-    }
-
-    for (auto& enemy : enemies) {
-        for (auto& bullet : enemy.getBullets()) {
-            bullet.setAlive(true);
-            if (checkCollision(bullet, player)) {
-                player.getHit(1);
-                bullet.setAlive(false); // Remove the bullet upon collision
-            }
-        }
-    }
-
-    for (auto& enemy : enemies) {
-        enemy.removeInactiveBullets();
-    }
-    //ground
-    for (auto& enemy : enemies) {
-        enemy.update();
-        if (enemy.isAlive() && checkCollision(player, enemy)) {
-            player.getHit(1);
-            enemy.set_Alive(false);
-        }
-    }
+    ground_enemy();
+    sky_enemy();
 }
 
 
@@ -589,6 +586,11 @@ void GameWindow::draw() {
     switch (currentState) {
         case MENU:
             menu.draw();
+            break;
+        
+        case MODE_SELECTION:
+            // Draw mode selection screen
+            // For example, draw each mode image
             break;
 
         case GAME:

@@ -15,8 +15,15 @@
 
 enum GameState {
     MENU,
+    MODE_SELECTION,
     GAME,
     GAME_OVER
+};
+
+enum MODE {
+    MODE_1,
+    MODE_2,
+    MODE_3
 };
 
 class GameWindow {
@@ -34,12 +41,14 @@ public:
     void initGameOverScene();
     void updateGameOverScene();
     bool checkCollision(const Bullet& bullet, const Player& player);
-    void game_enemy();
+    void sky_enemy();
+    void ground_enemy();
     void game_player();
     bool checkCollision(const Player& player, const Enemy& enemy);
     void mode1();
     void mode2();
     void mode3();
+    void initModeSelectionScene();
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
