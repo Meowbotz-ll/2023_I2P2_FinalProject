@@ -56,6 +56,7 @@ public:
     void resetGame();
     void initLeaderboardScene();
     void updateLeaderBoard();
+    void background_draw();
     
     void useBomb();
     void checkBombCooldown();
@@ -71,6 +72,7 @@ private:
     ALLEGRO_SAMPLE *menuMusic;
     ALLEGRO_SAMPLE *gameMusic;
     ALLEGRO_BITMAP *backgroundImage;
+    ALGIF_ANIMATION* backgroundGIF;
     Menu menu;
     const char* enemyGif[4];
     bool doexit;

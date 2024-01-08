@@ -107,11 +107,13 @@ void GameWindow::init() {
         return;
     }
     // Load background image
-    backgroundImage = al_load_bitmap("img/bg.jpeg");
+    backgroundImage = al_load_bitmap("img/background.jpg");
     if (!backgroundImage) {
         Log::Error("Failed to load background image");
         return;
     }
+
+
     // Init background Music
     menuMusic = al_load_sample("audio/Run-Amok(chosic.com).mp3");
     gameMusic = al_load_sample("audio/Sakura-Girl-Daisy-chosic.com_.mp3");
@@ -301,6 +303,7 @@ void GameWindow::initScene() {
                 break;
             case GAME:
                 initGameScene();  // Initialize game-specific resources
+                gameSceneInitialized=false;
                 break;
             case GAME_OVER:
                 updateLeaderBoard();
@@ -374,7 +377,7 @@ void GameWindow::run() {
             //Log::Info("In Menu State");
 
             switch (ev.type) {
-            case ALLEGRO_EVENT_TIMER:
+            case ALLEGRO_EVENT_TIMER:{
                 switch(selectedMode){
                     case 0:
                         mode1();
@@ -392,7 +395,7 @@ void GameWindow::run() {
                     
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
-
+            }
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
                 doexit = true;
                 break;
@@ -679,6 +682,20 @@ bool GameWindow::checkCollision(const Player& player, const Enemy& enemy) {
              playerTop > enemyBottom || playerBottom < enemyTop);
 }
 
+// 修改遊戲循環的一部分以更新 GIF
+/*void GameWindow::background_draw() {
+    //ALGIF_ANIMATION * backgroundGIF = algif_load_animation("img/background.gif");
+    ALLEGRO_BITMAP* frameBitmap = algif_get_bitmap(backgroundGIF, al_get_time());
+    if (frameBitmap) {
+        // Get the dimensions of the display
+        int screenWidth = al_get_display_width(display);
+        int screenHeight = al_get_display_height(display);
+
+        // Draw the bitmap to cover the entire screen
+        al_draw_bitmap(frameBitmap, 0, 0, 0);
+    }
+}*/
+
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -703,6 +720,13 @@ void GameWindow::draw() {
             break;
 
         case GAME:
+            // Draw background first
+            /*if(backgroundImage != nullptr) {
+                al_draw_bitmap(backgroundImage, 0, 0, 0);
+            }*/
+
+
+            al_draw_bitmap(backgroundImage, 0, 0, 0);
             currentTime = static_cast<int>(al_get_time() - startTime);
             timeStream << "Time: " << currentTime;
             timeText = timeStream.str();
@@ -717,6 +741,9 @@ void GameWindow::draw() {
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
             
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            
+
+            
             player.draw();
             if (!bombAvailable) {
             double cooldownTime = 30 - (al_get_time() - lastBombTime);
@@ -739,9 +766,7 @@ void GameWindow::draw() {
                     
                 }
             }
-            if(backgroundImage != nullptr) {
-                al_draw_bitmap(backgroundImage, 0, 0, 0);
-            }
+        
             break;
 
         case LEADERBOARD:
