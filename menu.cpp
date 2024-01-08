@@ -16,12 +16,16 @@ void Menu::update() {
 }
 
 void Menu::draw() {
-    if (!font) {
+if (!font) {
         //Log::Error("Font not loaded");
         return;
     }
     
+    // Draw existing text
     al_draw_text(font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "Press Enter to Start");
+
+    // Draw new text for Leaderboard instruction
+    al_draw_text(font, al_map_rgb(255, 255, 255), 400, 340, ALLEGRO_ALIGN_CENTER, "Press L for Leaderboard");
 }
 
 bool Menu::startGame() const {
