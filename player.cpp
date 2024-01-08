@@ -72,6 +72,14 @@ void Player::update(int score) {
         Log::Info("Weapon change to shotgun");
     }
     if (key_state[ALLEGRO_KEY_3] && score>=10) {
+        currentWeapon = BOUNCING_GUN;
+        Log::Info("Weapon change to bouncing gun");
+    }
+    if (key_state[ALLEGRO_KEY_4] && score>=15) {
+    currentWeapon = HEXA_BLASTER;
+        Log::Info("Weapon change to hexablaster");
+    }
+    if (key_state[ALLEGRO_KEY_5] && score>=20) {
         currentWeapon = BAZOOKA;
         Log::Info("Weapon change to bazooka");
     }
@@ -177,18 +185,36 @@ void Player::shoot(float target_x, float target_y) {
                 float newDy = dy * std::cos(angle) + dx * std::sin(angle);
                 Bullet newBullet(x, y, newDx, newDy);
                 newBullet.setSize(20);
-                newBullet.setDamage(1);
+                newBullet.setDamage(2);
                 bullets.push_back(newBullet);
             }
             break;
         }
         case BAZOOKA: {
             Bullet bazookaBullet(x, y, dx, dy);
-            bazookaBullet.setSize(50); // Adjusted size for the bazooka bullet
+            bazookaBullet.setSize(30); // Adjusted size for the bazooka bullet
             bazookaBullet.setDamage(100);
             bullets.push_back(bazookaBullet);
             break;
         }
+        case HEXA_BLASTER: {
+        Bullet hexaBullet(x, y, dx, dy);
+        hexaBullet.setSize(15);
+        hexaBullet.setDamage(2); // Initial impact damage
+        hexaBullet.setExploding(true); // Flag to identify this as an exploding bullet
+        bullets.push_back(hexaBullet);
+        break;
+}
+        case BOUNCING_GUN:{
+            Bullet bouncingBullet(x, y, dx, dy); // true for bouncing
+            bouncingBullet.setSize(15);
+            bouncingBullet.setDamage(2); // Adjust damage as needed
+            bouncingBullet.setBouncing(true);
+            bouncingBullet.setBounceCount(5);
+            bullets.push_back(bouncingBullet);
+            break;
+        }
+
     }
 }
 

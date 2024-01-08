@@ -60,6 +60,7 @@ public:
     
     void useBomb();
     void checkBombCooldown();
+    void createExplosion(float x,float y);
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;

@@ -3,7 +3,8 @@
 #include <allegro5/allegro.h>
 #include "allegro_setup.h"
 #include <vector>
-
+#include <math.h>
+#include <algorithm>
 class Bullet {
 public:
     float x, y;
@@ -31,14 +32,29 @@ public:
     }
     bool isOffScreen() const { return offScreen; }
     bool is_Alive() const;
-
+    void setExploding(bool value){
+        exploding = value;
+    }
+    void setBouncing(bool value){
+        isBouncing =value;
+    }
+    bool isExploding() const {
+        return exploding;
+    }
+    void setBounceCount(int value)
+    {
+        bounceCount=value;
+    }
+    bool isBouncing=false;
+    float dx, dy;
+    int bounceCount=0; // To limit the number of bounces
 
 private:
-    float dx, dy;
     bool alive;
     int damage;  // 存储每个子弹的伤害值
     bool hit; // 新增成员变量，用于跟踪子弹是否已经击中敌人
     int size;
     bool isEnemyBullet;
     bool offScreen;
+    bool exploding=false;
 };

@@ -319,9 +319,21 @@ void GameWindow::initScene() {
         previousState = currentState;  // Update the previous state
     }
 }
+void GameWindow::createExplosion(float x, float y) {
+    float angleStep = 60.0; // Degrees
+    for (int i = 0; i < 6; ++i) {
+        float angle = i * angleStep;
+        float radian = angle * (M_PI / 180.0); // Convert to radians
+        float dx = cos(radian);
+        float dy = sin(radian);
+        Bullet newBullet(x, y, dx, dy);
+        newBullet.setSize(10);
+        newBullet.setDamage(3); // Damage of each exploded bullet
+        player.getBullets().push_back(newBullet);
+    }
+}
 void GameWindow::run() {
     Log::Info("Game Started!");
-
     while (!doexit) {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
@@ -609,8 +621,26 @@ void GameWindow::game_player()
         for (auto& enemy : enemies) {
             if (checkCollision(bullet, enemy) && enemy.isAlive()) {
                 enemy.hit(bullet.getDamage());
+                if(bullet.isExploding())
+                {
+                    createExplosion(bullet.x,bullet.y);
+                }
                 bullet.setHit(true); // 标记子弹已经击中敌人
+                if(bullet.isBouncing)
+                {
+                    bullet.dx = -bullet.dx;
+                    bullet.dy = -bullet.dy;
+                    bullet.bounceCount--;
+                    if(bullet.bounceCount<=0)
+                    {
+                        bullet.setAlive(false);
+                    }
+                }
+                else
+                {
+
                 bullet.setAlive(false); // 设置子弹为不活跃
+                }
                 if(enemy.hp<=0){
                     score++;
                     enemy.set_Alive(false);

@@ -8,7 +8,9 @@
 enum WeaponType {
         PISTOL,
         SHOTGUN,
-        BAZOOKA
+        BAZOOKA,
+        HEXA_BLASTER,
+        BOUNCING_GUN
     };
 
 class Player {
