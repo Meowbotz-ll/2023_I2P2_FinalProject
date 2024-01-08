@@ -72,6 +72,8 @@ private:
     ALLEGRO_FONT* font;
     ALLEGRO_SAMPLE *menuMusic;
     ALLEGRO_SAMPLE *gameMusic;
+    ALLEGRO_SAMPLE *loseMusic;
+    ALLEGRO_SAMPLE *bombSound;
     ALLEGRO_BITMAP *backgroundImage;
     ALGIF_ANIMATION* backgroundGIF;
     Menu menu;

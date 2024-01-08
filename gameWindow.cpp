@@ -118,6 +118,8 @@ void GameWindow::init() {
     // Init background Music
     menuMusic = al_load_sample("audio/Run-Amok(chosic.com).mp3");
     gameMusic = al_load_sample("audio/Sakura-Girl-Daisy-chosic.com_.mp3");
+    bombSound = al_load_sample("audio/bomb_explosion.wav");
+    loseMusic = al_load_sample("audio/violin-lose.mp3");
 
 const char* playerGifFiles[2] = {
         "player_img/player_r.gif",   // Replace with actual file path
@@ -133,7 +135,7 @@ const char* playerGifFiles[2] = {
         Log::Info(std::string("Loading GIF: ") + playerGifFiles[i]);
     }
 
-if (!menuMusic || !gameMusic) {
+if (!menuMusic || !gameMusic||!bombSound) {
     Log::Error("Failed to load music files");
     return;
 }
@@ -249,7 +251,7 @@ void GameWindow::initGameScene()
         }
         gameSceneInitialized=true;
     }
-    al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+    
 }
 void GameWindow::updateLeaderBoard() {
     std::vector<int> scores;
@@ -278,6 +280,7 @@ void GameWindow::updateLeaderBoard() {
 void GameWindow::useBomb() {
 if (!bombAvailable) return;
 
+    al_play_sample(bombSound, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
     for (auto& enemy : enemies) {
         if (enemy.isAlive()) {
             enemy.hit(bombDamage);  // Apply damage
@@ -340,6 +343,43 @@ void GameWindow::run() {
         al_wait_for_event(event_queue, &ev);
         initScene();
         checkBombCooldown();
+        switch (ev.type) {
+            case ALLEGRO_EVENT_TIMER:{
+                switch(selectedMode){
+                    case 0:
+                        mode1();
+                        game_player();
+                        break;
+                    case 1:
+                        mode2();
+                        game_player();
+                        break;
+                    case 2:
+                        mode3();
+                        game_player();
+                        break;
+                }
+                    
+                // Add any other updates here, e.g., for game world, enemies, etc.
+                break;
+            }
+            case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                doexit = true;
+                break;
+
+            case ALLEGRO_EVENT_KEY_DOWN:
+                key_state[ev.keyboard.keycode] = true;
+                break;
+
+            case ALLEGRO_EVENT_KEY_UP:
+                key_state[ev.keyboard.keycode] = false;
+                if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+                    Log::Info("Escape Key Pressed - Switching to Menu State"); // Debug message for pressing Escape
+                    al_stop_samples(); // Stop any currently playing music
+                    currentState = MENU;
+                }
+                break;
+        }
         switch (currentState) {
             case MENU:
             //Log::Info("In Menu State");
@@ -386,8 +426,6 @@ void GameWindow::run() {
                     }
                 }
                 break;
-
-
             case GAME:
             //Log::Info("In Menu State");
 
@@ -411,22 +449,6 @@ void GameWindow::run() {
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
             }
-            case ALLEGRO_EVENT_DISPLAY_CLOSE:
-                doexit = true;
-                break;
-
-            case ALLEGRO_EVENT_KEY_DOWN:
-                key_state[ev.keyboard.keycode] = true;
-                break;
-
-            case ALLEGRO_EVENT_KEY_UP:
-                key_state[ev.keyboard.keycode] = false;
-                if (ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
-                    Log::Info("Escape Key Pressed - Switching to Menu State"); // Debug message for pressing Escape
-                    al_stop_samples(); // Stop any currently playing music
-                    currentState = MENU;
-                }
-                break;
 
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
                 if (ev.mouse.button & 1) { // Left mouse button
@@ -440,25 +462,18 @@ void GameWindow::run() {
                 
                 break;
                 case GAME_OVER:
-                if (ev.type == ALLEGRO_EVENT_KEY_DOWN && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+
+                if (ev.type == ALLEGRO_EVENT_KEY_UP && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
                     Log::Info("Escape Clicked");
                     // Example: Return to menu or close the game
                     currentState=MENU;
                 }
                 
-                break;
-
-            // Add additional cases here for other types of events
+                break;      
         }
 
-        
-        case GAME_OVER:
-            
-        break;
-        
 
         }
-
         
         draw();
     }
@@ -743,6 +758,7 @@ void GameWindow::draw() {
     switch (currentState) {
         case MENU:
             menu.draw();
+            al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             break;
         
         case MODE_SELECTION:
@@ -816,6 +832,7 @@ void GameWindow::draw() {
             initLeaderboardScene();
             break;
         case GAME_OVER:
+            al_play_sample(loseMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_ONCE, NULL);
             // Drawing code for game over screen
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
              // 繪製返回按鈕
