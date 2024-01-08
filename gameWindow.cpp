@@ -101,20 +101,11 @@ void GameWindow::init() {
         return;
     }
     // Load background image
-    backgroundImage = al_load_bitmap("img\background.jpg");
+    backgroundImage = al_load_bitmap("img/background.jpg");
     if (!backgroundImage) {
         Log::Error("Failed to load background image");
         return;
     }
-    //backgroundImage = algif_load_animation("img/background.gif");
-    //ALGIF_ANIMATION * backgroundGIF = algif_load_animation("img/background.gif");
-
-    // 載入背景動畫
-    /*backgroundGIF = algif_load_animation("img/background.gif");
-    if (!backgroundGIF) {
-        Log::Error("Failed to load background GIF");
-        return;
-    }*/
 
 
     // Init background Music
@@ -292,6 +283,7 @@ void GameWindow::initScene() {
                 break;
             case GAME:
                 initGameScene();  // Initialize game-specific resources
+                gameSceneInitialized=false;
                 break;
             case GAME_OVER:
                 updateLeaderBoard();
@@ -365,7 +357,7 @@ void GameWindow::run() {
             //Log::Info("In Menu State");
 
             switch (ev.type) {
-            case ALLEGRO_EVENT_TIMER:
+            case ALLEGRO_EVENT_TIMER:{
                 switch(selectedMode){
                     case 0:
                         mode1();
@@ -383,7 +375,7 @@ void GameWindow::run() {
                     
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
-
+            }
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
                 doexit = true;
                 break;
@@ -708,6 +700,13 @@ void GameWindow::draw() {
             break;
 
         case GAME:
+            // Draw background first
+            /*if(backgroundImage != nullptr) {
+                al_draw_bitmap(backgroundImage, 0, 0, 0);
+            }*/
+
+
+            al_draw_bitmap(backgroundImage, 0, 0, 0);
             currentTime = static_cast<int>(al_get_time() - startTime);
             timeStream << "Time: " << currentTime;
             timeText = timeStream.str();
@@ -723,10 +722,7 @@ void GameWindow::draw() {
             
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             
-            // Draw background first
-            if(backgroundImage != nullptr) {
-                al_draw_bitmap(backgroundImage, 0, 0, 0);
-            }
+
             
             player.draw();
             for (auto& enemy : enemies) {
