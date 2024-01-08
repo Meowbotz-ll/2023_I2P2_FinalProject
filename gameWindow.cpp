@@ -301,6 +301,7 @@ void GameWindow::initScene() {
                 break;
             case MODE_SELECTION:
                 initModeSelectionScene();
+                resetGame();
                 gameSceneInitialized=false;
                 break;
             case GAME:
@@ -309,6 +310,7 @@ void GameWindow::initScene() {
                 break;
             case GAME_OVER:
                 updateLeaderBoard();
+                resetGame();
                 Log::Info("Updated High score! "+std::to_string(score)+".");
                 gameSceneInitialized=false;
                 break;
