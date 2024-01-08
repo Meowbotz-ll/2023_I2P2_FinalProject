@@ -20,7 +20,7 @@ public:
     float x, y;
     int hp;  // 默认的敌人生命值
     //EnemyType type;
-    Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4]);
+    Enemy(float x, float y, float vx, EnemyType type, std::vector<ALGIF_ANIMATION*> walkingGif);
     void update();
     void draw();
     void hit(int damage);
@@ -39,7 +39,8 @@ public:
     float get_X() const;
     float get_Y() const;
     static const int ENEMY_SIZE = 10;
-    
+    // ALGIF_ANIMATION *walkingGif[4];
+    std::vector<ALGIF_ANIMATION*> walkingGif;
 
 private:
     float vx, vy; // 新增：敌人的速度
@@ -49,7 +50,7 @@ private:
     EnemyType type;
     std::vector<Bullet> bullets;  // 将其作为成员变量
     double lastShootTime;
-    ALGIF_ANIMATION *walkingGif[4];
+    
     std::vector<Enemy> enemies;
 
 };

@@ -60,6 +60,7 @@ public:
     
     void useBomb();
     void checkBombCooldown();
+    void game_destroy();
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
@@ -90,6 +91,8 @@ private:
     const int bombDamage = 10000;
     double lastBombTime;
     const int bombCooldown=30;
+    // ALGIF_ANIMATION *walkingGif[4];
+    vector<ALGIF_ANIMATION*> walkingGif;
 };
 
 #endif // GAME_WINDOW_H

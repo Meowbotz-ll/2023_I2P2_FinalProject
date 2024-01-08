@@ -3,16 +3,18 @@
 #include "log.h"
 #include <cmath>
 #include <algorithm>
+#include <vector>
 
-Enemy::Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4]) 
-    : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false), type(type), lastShootTime(0) {
-        for(int i = 0; i < 4; i++) {
+Enemy::Enemy(float x, float y, float vx, EnemyType type,std::vector<ALGIF_ANIMATION*> walkingGiff) 
+    : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false), type(type), lastShootTime(0),walkingGif(walkingGiff) {
+        /*for(int i = 0; i < 4; i++) {
         walkingGif[i] = algif_load_animation(gifFile[i]);
         if (!walkingGif[i]) {
             Log::Error("Failed to load GIF: " + std::string(gifFile[i]));
         }
-    }
-    }
+    }*/
+    //walkingGif = walkingGiff;
+}
 
 
 void Enemy::update() {

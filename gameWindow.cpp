@@ -29,6 +29,8 @@ GameWindow::~GameWindow() {
     if (backgroundImage) {
         al_destroy_bitmap(backgroundImage);
     }
+    //al_destroy_bitmap()
+    
 }
 void GameWindow::resetGame() {
     // Reset player stats, position, etc.
@@ -114,10 +116,10 @@ void GameWindow::init() {
         return;
     }
 
-
     // Init background Music
     menuMusic = al_load_sample("audio/Run-Amok(chosic.com).mp3");
     gameMusic = al_load_sample("audio/Sakura-Girl-Daisy-chosic.com_.mp3");
+    //al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 
 const char* playerGifFiles[2] = {
         "player_img/player_r.gif",   // Replace with actual file path
@@ -127,6 +129,14 @@ const char* playerGifFiles[2] = {
     enemyGif[1] = "enemy_gif/enemy_ground_l.gif";
     enemyGif[2] = "enemy_gif/enemy_ground_r.gif";
     enemyGif[3] = "enemy_gif/enemy_ground_l.gif";
+
+    for(int i = 0; i < 4; i++) {
+        walkingGif.push_back(algif_load_animation(enemyGif[i]));
+        if (!walkingGif[i]) {
+            Log::Error("Failed to load GIF: " + std::string(enemyGif[i]));
+        }
+    }
+
 
 // Log the loading of each GIF file
     for (int i = 0; i < 2; ++i) {
@@ -244,7 +254,7 @@ void GameWindow::initGameScene()
         Log::Info("Game Reset");
         if(backgroundImage!=nullptr)
         {
-        al_draw_bitmap(backgroundImage, 0, 0, 0);
+        //al_draw_bitmap(backgroundImage, 0, 0, 0);
         Log::Info("Background Init");
         }
         gameSceneInitialized=true;
@@ -477,7 +487,7 @@ void GameWindow::mode1()
         }
 
         // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type, walkingGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     ground_enemy();
@@ -508,7 +518,7 @@ void GameWindow::mode2()
         }
 
         // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type, walkingGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     sky_enemy();
@@ -587,7 +597,7 @@ void GameWindow::mode3()
         }
 
         // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type, walkingGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     ground_enemy();
@@ -728,7 +738,7 @@ void GameWindow::draw() {
             }*/
 
 
-            //al_draw_bitmap(backgroundImage, 0, 0, 0);
+            al_draw_bitmap(backgroundImage, 0, 0, 0);
             currentTime = static_cast<int>(al_get_time() - startTime);
             timeStream << "Time: " << currentTime;
             timeText = timeStream.str();
@@ -742,7 +752,6 @@ void GameWindow::draw() {
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
             
-            al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             
 
             
@@ -786,5 +795,7 @@ void GameWindow::draw() {
 
     al_flip_display();
 }
+
+
 
 
