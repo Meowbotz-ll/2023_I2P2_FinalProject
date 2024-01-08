@@ -15,6 +15,7 @@ int selectedMode = -1;  // 被選擇的模式，初始值為-1表示未選擇
 GameWindow::GameWindow() : currentState(MENU),previousState(MENU),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
     Log::Info("GameWindow Created");
     init();
+    lastBombTime=0;
     //enemies.push_back(Enemy(100, 100, 0.5));
 }
 
@@ -286,7 +287,8 @@ if (!bombAvailable) return;
         }
     }
 
-    bombAvailable = false; // Set to false to prevent reuse, can add cooldown logic
+    bombAvailable = false;
+    lastBombTime = al_get_time(); // Record the time when bomb was used
 }
 
 void GameWindow::initScene() {
@@ -324,7 +326,7 @@ void GameWindow::run() {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
         initScene();
-        
+        checkBombCooldown();
         switch (currentState) {
             case MENU:
             //Log::Info("In Menu State");
@@ -745,14 +747,14 @@ void GameWindow::draw() {
 
             
             player.draw();
-            if (!bombAvailable) {
-            double cooldownTime = 30 - (al_get_time() - lastBombTime);
-            std::string cooldownText = "Bomb Cooldown: " + std::to_string(static_cast<int>(cooldownTime)) + "s";
+        if (!bombAvailable) {
+            double remainingCooldown = bombCooldown - (al_get_time() - lastBombTime);
+            remainingCooldown = std::max(0.0, remainingCooldown); // Avoid negative values
+            std::ostringstream cooldownStream;
+            cooldownStream.precision(1); // Set precision for decimal seconds
+            cooldownStream << std::fixed << "Bomb Cooldown: " << remainingCooldown << "s";
+            std::string cooldownText = cooldownStream.str();
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 10, 70, 0, cooldownText.c_str());
-
-            if (al_get_time() - lastBombTime > 30) {
-                bombAvailable = true;
-            }
         }
             for (auto& enemy : enemies) {
                 // 这里只绘制活着的敌人
