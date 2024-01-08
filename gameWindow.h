@@ -12,12 +12,16 @@
 #include <sstream> // Include this header for ostringstream
 #include <iomanip>
 #include "menu.h"
+#include <fstream>
+#include <algorithm>
 
+using namespace std;
 enum GameState {
     MENU,
     MODE_SELECTION,
     GAME,
-    GAME_OVER
+    GAME_OVER,
+    LEADERBOARD
 };
 
 enum MODE {
@@ -50,7 +54,6 @@ public:
     void mode3();
     void initModeSelectionScene();
     void resetGame();
-    int getScore();
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
@@ -75,6 +78,7 @@ private:
     float back_button_x, back_button_y;  // 返回按鈕位置
     float exit_button_x, exit_button_y;  // 退出按鈕位置
     float button_width, button_height;   // 按鈕大小
+    vector<int> leaderboardScores;
 };
 
 #endif // GAME_WINDOW_H

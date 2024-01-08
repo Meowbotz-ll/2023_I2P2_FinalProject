@@ -178,8 +178,40 @@ if (!menuMusic || !gameMusic) {
 void GameWindow::initMenuScene()
 {
     Log::Info("Menu Scene Initialized");
+    std::ifstream inFile("leaderboard.txt");
+    leaderboardScores.clear();
+    int score;
+    while (inFile >> score) {
+        leaderboardScores.push_back(score);
+    }
+    inFile.close();
+    Log::Info("Score Loaded");
 }
+void GameWindow::initLeaderboardScene()
+{
+ // Load a larger font for the title
+    ALLEGRO_FONT* title_font = al_load_font("fonts/ARCADE.TTF", 48, 0);
+    if (!title_font) {
+        Log::Error("Failed to load title font");
+        return; // Early return if font loading fails
+    }
 
+    // Draw the title "Leaderboard"
+    al_draw_text(title_font, al_map_rgb(255, 215, 0), 400, 50, ALLEGRO_ALIGN_CENTER, "Leaderboard");
+
+    // Logic to display scores
+    int yPosition = 150; // Adjusted starting position for displaying scores (below the title)
+    int index = 1;
+    for (const auto& score : leaderboardScores) {
+        std::string scoreLine = std::to_string(index) + ". " + std::to_string(score);
+        al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, yPosition, ALLEGRO_ALIGN_CENTER, scoreLine.c_str());
+        yPosition += 30; // Increment position for the next score
+        index++;
+    }
+
+    // Clean up the title font
+    al_destroy_font(title_font);
+}
 void GameWindow::initModeSelectionScene() {
     for (int i = 0; i < NUM_MODES; ++i) {
         // 根據實際需求替換下面的路徑
@@ -210,6 +242,30 @@ void GameWindow::initGameScene()
     }
     al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 }
+void GameWindow::updateLeaderBoard() {
+    std::vector<int> scores;
+    std::ifstream inFile("leaderboard.txt");
+
+    // Read existing scores from the file
+    int existingScore;
+    while (inFile >> existingScore) {
+        scores.push_back(existingScore);
+    }
+    inFile.close();
+
+    // Add the current game's score
+    scores.push_back(score);
+
+    // Sort the scores
+    std::sort(scores.begin(), scores.end(), std::greater<int>());
+
+    // Write the scores back to the file
+    std::ofstream outFile("leaderboard.txt");
+    for (const auto& s : scores) {
+        outFile << s << std::endl;
+    }
+    outFile.close();
+}
 
 void GameWindow::initScene() {
     // Check if the current state is different from the previous state
@@ -227,7 +283,11 @@ void GameWindow::initScene() {
                 initGameScene();  // Initialize game-specific resources
                 break;
             case GAME_OVER:
+                updateLeaderBoard();
+                Log::Info("Updated High score! "+std::to_string(score)+".");
                 gameSceneInitialized=false;
+                break;
+            case LEADERBOARD:
                 break;
             // Add other cases as needed
         }
@@ -253,10 +313,20 @@ void GameWindow::run() {
                         currentState = MODE_SELECTION;
                         //menu.gameStart = true; // Update the flag in menu
                     }
+                    if (ev.keyboard.keycode == ALLEGRO_KEY_L) {
+                        currentState = LEADERBOARD;
+                    }
                 }
-                menu.update();
+                //menu.update();
                 break;
-                    
+            case LEADERBOARD:
+                //initLeaderboardScene();
+                // Add logic to return to the menu, for example, by pressing ESCAPE
+                if (ev.type == ALLEGRO_EVENT_KEY_UP && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
+                    currentState = MENU;
+                }
+                break;
+            break;        
             case MODE_SELECTION:
                 if (ev.type == ALLEGRO_EVENT_KEY_UP) {
                     switch (ev.keyboard.keycode) {
@@ -347,6 +417,7 @@ void GameWindow::run() {
         case GAME_OVER:
             
         break;
+        
 
         }
 
@@ -605,6 +676,10 @@ void GameWindow::draw() {
             break;
         
         case MODE_SELECTION:
+                    // Display instructions for choosing different levels
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 200, ALLEGRO_ALIGN_CENTER, "Press 1 to choose Ground Level");
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 250, ALLEGRO_ALIGN_CENTER, "Press 2 to choose Sky Level");
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "Press 3 to choose Hard Level");
             break;
 
         case GAME:
@@ -614,7 +689,7 @@ void GameWindow::draw() {
             scoreText = "Score: " + std::to_string(score);
 
             // Draw Health Bar
-            currentHealthWidth = (player.getHp() * maxHealthWidth) / 100;
+            currentHealthWidth = (player.getHp() * maxHealthWidth) / 10;
             al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0));
 
             // Draw text
@@ -640,14 +715,17 @@ void GameWindow::draw() {
             }
             break;
 
+        case LEADERBOARD:
+            initLeaderboardScene();
+            break;
         case GAME_OVER:
             // Drawing code for game over screen
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
              // 繪製返回按鈕
             std::string highScoreText = "High Score: " + std::to_string(score);
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 350, ALLEGRO_ALIGN_CENTER, highScoreText.c_str());
-
             break;
+
     }
 
     al_flip_display();
