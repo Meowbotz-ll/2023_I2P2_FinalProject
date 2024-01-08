@@ -689,7 +689,7 @@ void GameWindow::draw() {
             scoreText = "Score: " + std::to_string(score);
 
             // Draw Health Bar
-            currentHealthWidth = (player.getHp() * maxHealthWidth) / 100;
+            currentHealthWidth = (player.getHp() * maxHealthWidth) / 10;
             al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0));
 
             // Draw text
