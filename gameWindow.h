@@ -50,6 +50,7 @@ public:
     void mode3();
     void initModeSelectionScene();
     void resetGame();
+    int getScore();
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;

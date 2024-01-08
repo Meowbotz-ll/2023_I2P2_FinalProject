@@ -111,13 +111,13 @@ void GameWindow::init() {
     gameMusic = al_load_sample("audio/Sakura-Girl-Daisy-chosic.com_.mp3");
 
 const char* playerGifFiles[2] = {
-        "player_img/player_l.gif",   // Replace with actual file path
-        "player_img/player_r.gif",  // Replace with actual file path
+        "player_img/player_r.gif",   // Replace with actual file path
+        "player_img/player_l.gif",  // Replace with actual file path
     };
     enemyGif[0] = "enemy_gif/flying.gif";
-    enemyGif[1] = "enemy_gif/enemy_ground_r.gif";
-    enemyGif[2] = "enemy_gif/enemy_ground_l.gif";
-    enemyGif[3] = "enemy_gif/enemy_ground_r.gif";
+    enemyGif[1] = "enemy_gif/enemy_ground_l.gif";
+    enemyGif[2] = "enemy_gif/enemy_ground_r.gif";
+    enemyGif[3] = "enemy_gif/enemy_ground_l.gif";
 
 // Log the loading of each GIF file
     for (int i = 0; i < 2; ++i) {
@@ -501,7 +501,7 @@ void GameWindow::mode3()
 
 void GameWindow::game_player()
 {
-    player.update();
+    player.update(score);
     // Check if the player's health is 0 or less
     if (player.getHp() <= 0) {
         //Log::Info("Game Over!");
@@ -635,6 +635,9 @@ void GameWindow::draw() {
                     
                 }
             }
+            if(backgroundImage != nullptr) {
+                al_draw_bitmap(backgroundImage, 0, 0, 0);
+            }
             break;
 
         case GAME_OVER:
@@ -648,5 +651,10 @@ void GameWindow::draw() {
     }
 
     al_flip_display();
+}
+
+int GameWindow::getScore()
+{
+    return score;
 }
 

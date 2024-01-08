@@ -5,6 +5,7 @@
 #include "bullet.h"
 #include <vector>
 
+
 enum WeaponType {
         PISTOL,
         SHOTGUN,
@@ -16,7 +17,7 @@ public:
     ~Player();
     Player();
     void init(float x, float y,const char* gifFile[4]);
-    void update();
+    void update(int score);
     void draw();
     void reset();
     void shoot(float target_x, float target_y);
