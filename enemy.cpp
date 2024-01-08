@@ -16,17 +16,21 @@ Enemy::Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4])
 
 
 void Enemy::update() {
+
     if(type == AIR) x += vx;
     else x += 2*vx;
     
     // 检查是否离开屏幕
     if (x < 0 || x > 800) {  // 假设屏幕宽度为800
         offScreen = true;
+        alive = false; // 离开屏幕后将敌人标记为不活跃
     }
 
-    // Update bullets
-    for (auto& bullet : bullets) {
-        bullet.update();
+    // 如果敌人仍然活跃，则更新子弹
+    if (alive) {
+        for (auto& bullet : bullets) {
+            bullet.update();
+        }
     }
     
 }

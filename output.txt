@@ -262,6 +262,7 @@ Enemy::Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4])
 
 
 void Enemy::update() {
+
     if(type == AIR) x += vx;
     else x += 2*vx;
     
@@ -313,7 +314,7 @@ void Enemy::hit(int damage) {
 }
 
 bool Enemy::isAlive() const {
-    return hp > 0;
+    return alive;
 }
 
 void Enemy::set_Alive(bool status) {
@@ -376,7 +377,9 @@ void Enemy::removeInactiveBullets() {
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
                    [](const Bullet& bullet) { return !bullet.isAlive(); }),
                    bullets.end());
+                   
 }
+
 
 void Enemy::clearBullets() {
     bullets.clear();
@@ -613,7 +616,7 @@ void GameWindow::run() {
 
             switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
-                game_enemy();
+                mode2();
                 game_player();
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -670,7 +673,138 @@ void GameWindow::run() {
     }
 }
 
-void GameWindow::game_enemy()
+void GameWindow::mode1()
+{
+    static double last_spawn_time = 0;
+    static double enemySpawnInterval = 2.0;     
+    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+        last_spawn_time = al_get_time();
+        float spawnY;
+        float velocityX;
+        EnemyType type;
+
+        // 生成地上的敌人
+        spawnY = 460; // 与玩家相同的高度
+        velocityX = 1.0; // 天上敌人速度的两倍
+        type = EnemyType::GROUND;
+    
+
+        // 随机决定敌人从左侧或右侧出现
+        float spawnX;
+        if (rand() % 2 == 0) {
+            spawnX = -1; // 从屏幕左侧出现
+        } else {
+            spawnX = 801; // 从屏幕右侧出现
+            velocityX = -velocityX; // 改变移动方向
+        }
+
+        // 添加敌人到列表
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+    }
+    //ground
+    for (auto& enemy : enemies) {
+        enemy.update();
+        if (enemy.isAlive() && checkCollision(player, enemy)) {
+            player.getHit(1);
+            enemy.set_Alive(false);
+        }
+    }
+}
+
+void GameWindow::mode2()
+{
+    static double last_spawn_time = 0;
+    static double enemySpawnInterval = 5.0;     
+    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+        last_spawn_time = al_get_time();
+        float spawnY;
+        float velocityX;
+        EnemyType type;
+
+        // 生成天上的敌人
+        spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
+        velocityX = 1.0; // 初始速度
+        type = EnemyType::AIR;
+
+        // 随机决定敌人从左侧或右侧出现
+        float spawnX;
+        if (rand() % 2 == 0) {
+            spawnX = -1; // 从屏幕左侧出现
+        } else {
+            spawnX = 801; // 从屏幕右侧出现
+            velocityX = -velocityX; // 改变移动方向
+        }
+
+        // 添加敌人到列表
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+    }
+    // 遍历所有敌人
+    /*for (auto& enemy : enemies) {
+        enemy.update(); // 更新敌人位置和状态
+        // 如果敌人是天空中的敌人，则射击玩家
+        if (enemy.getType() == EnemyType::AIR) {
+            enemy.shootAtPlayer(player); // 让敌人射击玩家
+        }
+        // 遍历天空敌人的子弹并保持它们永远活跃
+            for (auto& bullet : enemy.getBullets()) {
+                bullet.setAlive(enemy.isAlive());
+            }
+    }
+
+    for (auto& enemy : enemies) {
+        for (auto& bullet : enemy.getBullets()) {
+            bullet.setAlive(true);
+            if (bullet.is_Alive() && checkCollision(bullet, player)) {
+                player.getHit(1);
+                bullet.setAlive(false); // Remove the bullet upon collision
+                enemy.removeInactiveBullets();
+            }
+        }
+    }
+
+    for (auto& enemy : enemies) {
+        enemy.removeInactiveBullets();
+    }
+    // 删除死亡敌人的子弹
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                     [](const Enemy& enemy) { return !enemy.isAlive(); }),
+                     enemies.end());*/
+    for (auto& enemy : enemies) {
+        enemy.update(); // 更新敌人位置和状态
+
+        // 天空中的敌人继续射击
+        if (enemy.getType() == EnemyType::AIR && enemy.isAlive()) {
+            enemy.shootAtPlayer(player);
+        }
+    }
+
+    // 遍历每个敌人的子弹
+    for (auto& enemy : enemies) {
+        for (auto& bullet : enemy.getBullets()) {
+            bullet.update(); // 更新子弹位置
+            // 检查子弹是否击中玩家
+            if (bullet.is_Alive() && checkCollision(bullet, player)) {
+                player.getHit(1);
+                bullet.setAlive(false); // 子弹击中玩家后消失
+            }
+        }
+    }
+
+    // 删除所有非活动的子弹
+    for (auto& enemy : enemies) {
+        enemy.removeInactiveBullets();
+    }
+
+    // 删除所有已死亡的敌人
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                     [](const Enemy& enemy) { return !enemy.isAlive(); }),
+                     enemies.end());
+    
+}
+
+void GameWindow::mode3()
 {
     static double last_spawn_time = 0;
     static double enemySpawnInterval = 2.0;     

@@ -38,7 +38,7 @@ public:
     void clearBullets();
     float get_X() const;
     float get_Y() const;
-    const int ENEMY_SIZE = 10;
+    static const int ENEMY_SIZE = 10;
     
 
 private:

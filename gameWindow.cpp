@@ -350,7 +350,7 @@ void GameWindow::mode2()
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     // 遍历所有敌人
-    for (auto& enemy : enemies) {
+    /*for (auto& enemy : enemies) {
         enemy.update(); // 更新敌人位置和状态
         // 如果敌人是天空中的敌人，则射击玩家
         if (enemy.getType() == EnemyType::AIR) {
@@ -368,17 +368,48 @@ void GameWindow::mode2()
             if (bullet.is_Alive() && checkCollision(bullet, player)) {
                 player.getHit(1);
                 bullet.setAlive(false); // Remove the bullet upon collision
+                enemy.removeInactiveBullets();
             }
         }
     }
 
     for (auto& enemy : enemies) {
-        if(!enemy.isAlive()) enemy.removeInactiveBullets();
+        enemy.removeInactiveBullets();
     }
     // 删除死亡敌人的子弹
     enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
                      [](const Enemy& enemy) { return !enemy.isAlive(); }),
-                     enemies.end());
+                     enemies.end());*/
+    for (auto& enemy : enemies) {
+        enemy.update(); // 更新敌人位置和状态
+
+        // 天空中的敌人继续射击
+        if (enemy.getType() == EnemyType::AIR && enemy.isAlive()) {
+            enemy.shootAtPlayer(player);
+        }
+    }
+
+    // 遍历每个敌人的子弹
+    for (auto& enemy : enemies) {
+        for (auto& bullet : enemy.getBullets()) {
+            bullet.update(); // 更新子弹位置
+            // 检查子弹是否击中玩家
+            if (bullet.is_Alive() && checkCollision(bullet, player)) {
+                player.getHit(1);
+                bullet.setAlive(false); // 子弹击中玩家后消失
+            }
+        }
+    }
+
+    // 删除所有非活动的子弹
+    for (auto& enemy : enemies) {
+        enemy.removeInactiveBullets();
+    }
+
+    // 删除所有已死亡的敌人
+    /*enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                     [](const Enemy& enemy) { return !enemy.isAlive(); }),
+                     enemies.end());*/
     
 }
 
