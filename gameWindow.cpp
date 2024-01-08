@@ -265,7 +265,7 @@ void GameWindow::updateLeaderBoard() {
     // Add the current game's score
     scores.push_back(score);
 
-    // Sort the scores
+    // Sort the score
     std::sort(scores.begin(), scores.end(), std::greater<int>());
 
     // Write the scores back to the file
