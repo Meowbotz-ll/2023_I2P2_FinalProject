@@ -39,7 +39,7 @@ void Bullet::draw() {
     if(!alive) return;
     if(isEnemyBullet)
     {
-    al_draw_filled_rectangle(x, y, x + size, y + size, al_map_rgb(255, 255, 255));
+    al_draw_filled_rectangle(x, y, x + size, y + size, al_map_rgb(220, 200, 255));
     }
     else
     {
