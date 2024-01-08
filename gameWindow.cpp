@@ -32,7 +32,8 @@ GameWindow::~GameWindow() {
 void GameWindow::resetGame() {
     // Reset player stats, position, etc.
     player.reset(); // Assuming there is a reset method in Player class
-
+    bombAvailable=true;
+    lastBombTime = 0;
     // Clear and reset enemy list
     enemies.clear();
     // Optionally, initialize first set of enemies
@@ -44,6 +45,11 @@ void GameWindow::resetGame() {
     currentTime = 0; // Reset the current time or elapsed time to 0
     // Reset any other game elements that change during gameplay
 }
+void GameWindow::checkBombCooldown() {
+        if (!bombAvailable && al_get_time() - lastBombTime >= bombCooldown) {
+            bombAvailable = true;
+        }
+    }
 void GameWindow::init() {
     Log::Info("Init Started:");
 
@@ -266,6 +272,20 @@ void GameWindow::updateLeaderBoard() {
     }
     outFile.close();
 }
+void GameWindow::useBomb() {
+if (!bombAvailable) return;
+
+    for (auto& enemy : enemies) {
+        if (enemy.isAlive()) {
+            enemy.hit(bombDamage);  // Apply damage
+            if (enemy.hp <= 0) {
+                enemy.set_Alive(false);
+            }
+        }
+    }
+
+    bombAvailable = false; // Set to false to prevent reuse, can add cooldown logic
+}
 
 void GameWindow::initScene() {
     // Check if the current state is different from the previous state
@@ -320,7 +340,7 @@ void GameWindow::run() {
                 //menu.update();
                 break;
             case LEADERBOARD:
-                //initLeaderboardScene();
+                initLeaderboardScene();
                 // Add logic to return to the menu, for example, by pressing ESCAPE
                 if (ev.type == ALLEGRO_EVENT_KEY_UP && ev.keyboard.keycode == ALLEGRO_KEY_ESCAPE) {
                     currentState = MENU;
@@ -392,12 +412,12 @@ void GameWindow::run() {
 
             case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
                 if (ev.mouse.button & 1) { // Left mouse button
-                    Log::Info("Left Mouse Button Clicked");
+                    Log::Info("Left Mouse Button Clicked - Shoot");
                     player.shoot(ev.mouse.x, ev.mouse.y);
                 }
                 if (ev.mouse.button & 2) {  // Right mouse button
-                    Log::Info("Right Mouse Button Clicked");
-
+                    Log::Info("Right Mouse Button Clicked - Bomb Used");
+                    useBomb();
                 }
                 
                 break;
@@ -698,6 +718,15 @@ void GameWindow::draw() {
             
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             player.draw();
+            if (!bombAvailable) {
+            double cooldownTime = 30 - (al_get_time() - lastBombTime);
+            std::string cooldownText = "Bomb Cooldown: " + std::to_string(static_cast<int>(cooldownTime)) + "s";
+            al_draw_text(ui_font, al_map_rgb(255, 0, 0), 10, 70, 0, cooldownText.c_str());
+
+            if (al_get_time() - lastBombTime > 30) {
+                bombAvailable = true;
+            }
+        }
             for (auto& enemy : enemies) {
                 // 这里只绘制活着的敌人
                 if (enemy.isAlive()) {

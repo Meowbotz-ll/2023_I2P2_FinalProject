@@ -56,6 +56,8 @@ public:
     void resetGame();
     void updateLeaderBoard();
     void initLeaderboardScene();
+    void useBomb();
+    void checkBombCooldown();
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
@@ -81,6 +83,10 @@ private:
     float exit_button_x, exit_button_y;  // 退出按鈕位置
     float button_width, button_height;   // 按鈕大小
     vector<int> leaderboardScores;
+    bool bombAvailable = true;  // Initially available, can add cooldown logic
+    const int bombDamage = 10000;
+    double lastBombTime;
+    const int bombCooldown=30;
 };
 
 #endif // GAME_WINDOW_H
