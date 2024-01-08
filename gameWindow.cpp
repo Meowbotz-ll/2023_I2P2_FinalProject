@@ -107,17 +107,17 @@ void GameWindow::init() {
         return;
     }
     // Init background Music
-    menuMusic = al_load_sample("audio/Electroman-Adventures.mp3");
-    gameMusic = al_load_sample("audio/Electroman-Adventures.mp3");
+    menuMusic = al_load_sample("audio/Run-Amok(chosic.com).mp3");
+    gameMusic = al_load_sample("audio/Sakura-Girl-Daisy-chosic.com_.mp3");
 
 const char* playerGifFiles[2] = {
-        "player_img/skeleton_left.gif",   // Replace with actual file path
-        "player_img/skeleton_right.gif",  // Replace with actual file path
+        "player_img/player_l.gif",   // Replace with actual file path
+        "player_img/player_r.gif",  // Replace with actual file path
     };
     enemyGif[0] = "enemy_gif/flying.gif";
-    enemyGif[1] = "enemy_gif/walking_r.gif";
-    enemyGif[2] = "enemy_gif/walking_l.gif";
-    enemyGif[3] = "enemy_gif/walking_r.gif";
+    enemyGif[1] = "enemy_gif/enemy_ground_r.gif";
+    enemyGif[2] = "enemy_gif/enemy_ground_l.gif";
+    enemyGif[3] = "enemy_gif/enemy_ground_r.gif";
 
 // Log the loading of each GIF file
     for (int i = 0; i < 2; ++i) {
