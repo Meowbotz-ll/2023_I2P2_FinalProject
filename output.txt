@@ -390,16 +390,318 @@ void Enemy::clearBullets() {
 
 
 ============== 
+File: .\game.cpp 
+-------------- 
+#include "game.h"
+#include "gameWindow.h"
+#include "log.h"  // Include your log class
+#include "algorithm"
+#include "bullet.h"
+#include <iterator>
+
+using namespace std;
+
+//extern std::vector<std::string> enemyGif;  // 假設 enemyGif 是字符串的向量
+//extern ALLEGRO_SAMPLE* gameMusic;  // 假設 gameMusic 是 Allegro 的音樂樣本
+
+
+void Game::mode1()
+{
+    enemyGif[0] = "enemy_gif/flying.gif";
+    enemyGif[1] = "enemy_gif/walking_r.gif";
+    enemyGif[2] = "enemy_gif/walking_l.gif";
+    enemyGif[3] = "enemy_gif/walking_r.gif";
+    //const char** enemyGif = window.getEnemyGif();
+    static double last_spawn_time = 0;
+    static double enemySpawnInterval = 2.0;     
+    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+        last_spawn_time = al_get_time();
+        float spawnY;
+        float velocityX;
+        EnemyType type;
+
+        // 生成地上的敌人
+        spawnY = 460; // 与玩家相同的高度
+        velocityX = 1.0; // 天上敌人速度的两倍
+        type = EnemyType::GROUND;
+    
+
+        // 随机决定敌人从左侧或右侧出现
+        float spawnX;
+        if (rand() % 2 == 0) {
+            spawnX = -1; // 从屏幕左侧出现
+        } else {
+            spawnX = 801; // 从屏幕右侧出现
+            velocityX = -velocityX; // 改变移动方向
+        }
+
+        // 添加敌人到列表
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+    }
+    ground_enemy();
+    //game_player();
+}
+
+void Game::mode2()
+{
+    //const char** enemyGif = window.getEnemyGif();
+    static double last_spawn_time = 0;
+    static double enemySpawnInterval = 5.0;     
+    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+        last_spawn_time = al_get_time();
+        float spawnY;
+        float velocityX;
+        EnemyType type;
+
+        // 生成天上的敌人
+        spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
+        velocityX = 1.0; // 初始速度
+        type = EnemyType::AIR;
+
+        // 随机决定敌人从左侧或右侧出现
+        float spawnX;
+        if (rand() % 2 == 0) {
+            spawnX = -1; // 从屏幕左侧出现
+        } else {
+            spawnX = 801; // 从屏幕右侧出现
+            velocityX = -velocityX; // 改变移动方向
+        }
+
+        // 添加敌人到列表
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+    }
+    sky_enemy();
+}
+
+void Game::sky_enemy()
+{
+    for (auto& enemy : enemies) {
+        enemy.update(); // 更新敌人位置和状态
+
+        // 天空中的敌人继续射击
+        if (enemy.getType() == EnemyType::AIR && enemy.isAlive()) {
+            enemy.shootAtPlayer(player);
+        }
+    }
+
+    // 遍历每个敌人的子弹
+    for (auto& enemy : enemies) {
+        for (auto& bullet : enemy.getBullets()) {
+            bullet.update(); // 更新子弹位置
+            // 检查子弹是否击中玩家
+            if (bullet.is_Alive() && checkCollision(bullet, player)) {
+                player.getHit(1);
+                bullet.setAlive(false); // 子弹击中玩家后消失
+            }
+        }
+    }
+
+    // 删除所有非活动的子弹
+    for (auto& enemy : enemies) {
+        enemy.removeInactiveBullets();
+    }
+}
+
+void Game::ground_enemy()
+{
+    for (auto& enemy : enemies) {
+        enemy.update();
+        if (enemy.isAlive() && checkCollision(player, enemy)) {
+            player.getHit(1);
+            enemy.set_Alive(false);
+        }
+    }
+}
+
+void Game::mode3()
+{
+    //const char** enemyGif = window.getEnemyGif();
+    static double last_spawn_time = 0;
+    static double enemySpawnInterval = 2.0;     
+    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
+        last_spawn_time = al_get_time();
+        float spawnY;
+        float velocityX;
+        EnemyType type;
+
+        // 随机决定生成哪种类型的敌人
+        if (rand() % 2 == 0) {
+            // 生成天上的敌人
+            spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
+            velocityX = 1.0; // 初始速度
+            type = EnemyType::AIR;
+        } else {
+            // 生成地上的敌人
+            spawnY = 460; // 与玩家相同的高度
+            velocityX = 1.0; // 天上敌人速度的两倍
+            type = EnemyType::GROUND;
+        }
+
+        // 随机决定敌人从左侧或右侧出现
+        float spawnX;
+        if (rand() % 2 == 0) {
+            spawnX = -1; // 从屏幕左侧出现
+        } else {
+            spawnX = 801; // 从屏幕右侧出现
+            velocityX = -velocityX; // 改变移动方向
+        }
+
+        // 添加敌人到列表
+        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
+    }
+    ground_enemy();
+    sky_enemy();
+}
+
+
+void Game::game_player()
+{
+    player.update();
+    // Check if the player's health is 0 or less
+    /*if (player.getHp() <= 0) {
+        //Log::Info("Game Over!");
+        window.setCurrentState(GAME_OVER);
+    }*/
+    // 检测子弹与敌人的碰撞
+    for (auto& bullet : player.getBullets()) {
+        if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
+        for (auto& enemy : enemies) {
+            if (checkCollision(bullet, enemy) && enemy.isAlive()) {
+                enemy.hit(bullet.getDamage());
+                bullet.setHit(true); // 标记子弹已经击中敌人
+                bullet.setAlive(false); // 设置子弹为不活跃
+                if(enemy.hp<=0){
+                    score++;
+                    enemy.set_Alive(false);
+                }
+                    break; // 退出内部循环
+            }
+        }
+    }
+    for (auto& enemy : enemies) {
+        if (!enemy.isAlive()) {
+            for (auto& bullet : enemy.getBullets()) {
+                bullet.update();
+                // 也许可以在这里检查子弹是否超出屏幕范围，并将其标记为不活跃
+                if (checkCollision(bullet, player)) {
+                    player.getHit(bullet.getDamage()); // 玩家受到伤害
+                    bullet.setAlive(false); // 子弹消失
+                }
+            }
+        }
+    }
+
+}
+
+bool Game::checkCollision(const Bullet &bullet, const Enemy &enemy) {
+    // Simple circle-rectangle collision detection
+    float distX = std::abs(bullet.x - enemy.x);
+    float distY = std::abs(bullet.y - enemy.y);
+
+    if (distX > (bullet.getSize()/ 2 + Enemy::RADIUS)) { return false; }
+    if (distY > (bullet.getSize()/ 2 + Enemy::RADIUS)) { return false; }
+
+    if (distX <= (bullet.getSize()/ 2)) { return true; } 
+    if (distY <= (bullet.getSize()/ 2)) { return true; }
+
+    // Corner collision
+    float dx = distX - bullet.getSize()/ 2;
+    float dy = distY - bullet.getSize()/ 2;
+    return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
+}
+
+bool Game::checkCollision(const Bullet& bullet, const Player& player) {
+    // Simple AABB (Axis-Aligned Bounding Box) collision check
+    float playerLeft = player.getX();
+    float playerRight = player.getX() + player.PLAYER_SIZE;
+    float playerTop = player.getY();
+    float playerBottom = player.getY() + player.PLAYER_SIZE;
+
+    float bulletLeft = bullet.x;
+    float bulletRight = bullet.x + bullet.getSize();
+    float bulletTop = bullet.y;
+    float bulletBottom = bullet.y + bullet.getSize();
+
+    return (playerLeft < bulletRight && playerRight > bulletLeft &&
+            playerTop < bulletBottom && playerBottom > bulletTop);
+}
+
+bool Game::checkCollision(const Player& player, const Enemy& enemy) {
+    // 獲取玩家和敵人的位置和大小
+    float playerLeft = player.getX();
+    float playerRight = player.getX() + player.PLAYER_SIZE;
+    float playerTop = player.getY();
+    float playerBottom = player.getY() + player.PLAYER_SIZE;
+
+    float enemyLeft = enemy.get_X();
+    float enemyRight = enemy.get_X() + enemy.ENEMY_SIZE;  // 假設敵人有一個SIZE常量
+    float enemyTop = enemy.get_Y();
+    float enemyBottom = enemy.get_Y() + enemy.ENEMY_SIZE;
+
+    // 檢查矩形是否重疊
+    return !(playerLeft > enemyRight || playerRight < enemyLeft ||
+             playerTop > enemyBottom || playerBottom < enemyTop);
+}
+
+/*void Game::draw(){
+    //ALLEGRO_SAMPLE* gameMusic = window.getGameMusic();
+    gameMusic = al_load_sample("audio/Electroman-Adventures.mp3");
+    std::ostringstream timeStream;
+    std::string timeText;
+    std::string scoreText;
+    const int maxHealthWidth = 750; // Maximum width of the health bar
+    int currentHealthWidth;
+
+    currentTime = static_cast<int>(al_get_time() - startTime);
+    timeStream << "Time: " << currentTime;
+    timeText = timeStream.str();
+    scoreText = "Score: " + std::to_string(score);
+
+    // Draw Health Bar
+    currentHealthWidth = (player.getHp() * maxHealthWidth) / 100;
+    al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0));
+
+     ui_font = al_load_font("fonts/ARCADE.TTF", 24, 0); // Load a font
+    // Draw text
+    al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
+    al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
+            
+    al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+    player.draw();
+    for (auto& enemy : enemies) {
+        // 这里只绘制活着的敌人
+        if (enemy.isAlive()) {
+            enemy.draw();
+        }
+    // 但是无论敌人是否活着，都绘制其子弹
+        for (auto& bullet : enemy.getBullets()) {
+            if (checkCollision(bullet, player)) continue;
+            else bullet.draw();
+                        
+        }
+    }
+}*/
+============== 
 File: .\gameWindow.cpp 
 -------------- 
 #include "gameWindow.h"
 #include "log.h"  // Include your log class
 #include "algorithm"
 #include "bullet.h"
+#include "game.h"
 
 
 #include <iterator>
 using namespace std;
+
+// 在GameWindow類中添加以下成員變量
+const int NUM_MODES = 3;  // 定義模式的數量
+ALLEGRO_BITMAP* modeSelectionImages[NUM_MODES];  // 保存模式選擇界面的圖片
+int selectedMode = -1;  // 被選擇的模式，初始值為-1表示未選擇
+//const char* enemyGif[4];
 
 GameWindow::GameWindow() : currentState(MENU),previousState(MENU),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
     Log::Info("GameWindow Created");
@@ -483,23 +785,23 @@ void GameWindow::init() {
     }
     // Init background Music
     menuMusic = al_load_sample("audio/Electroman-Adventures.mp3");
-    gameMusic = al_load_sample("audio/Electroman-Adventures.mp3");
+    //gameMusic = al_load_sample("audio/Electroman-Adventures.mp3");
 
 const char* playerGifFiles[2] = {
         "player_img/skeleton_left.gif",   // Replace with actual file path
         "player_img/skeleton_right.gif",  // Replace with actual file path
     };
-    enemyGif[0] = "enemy_gif/flying.gif";
+    /*enemyGif[0] = "enemy_gif/flying.gif";
     enemyGif[1] = "enemy_gif/walking_r.gif";
     enemyGif[2] = "enemy_gif/walking_l.gif";
-    enemyGif[3] = "enemy_gif/walking_r.gif";
+    enemyGif[3] = "enemy_gif/walking_r.gif";*/
 
 // Log the loading of each GIF file
     for (int i = 0; i < 2; ++i) {
         Log::Info(std::string("Loading GIF: ") + playerGifFiles[i]);
     }
 
-if (!menuMusic || !gameMusic) {
+if (!menuMusic /*|| !gameMusic*/) {
     Log::Error("Failed to load music files");
     return;
 }
@@ -554,6 +856,22 @@ void GameWindow::initMenuScene()
 {
     Log::Info("Menu Scene Initialized");
 }
+
+void GameWindow::initModeSelectionScene() {
+    // 显示 "Mode" 文字
+    al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "Mode");
+
+    for (int i = 0; i < NUM_MODES; ++i) {
+        // 根据实际需要替换下面的路径
+        modeSelectionImages[i] = al_load_bitmap(("img/mode" + std::to_string(i + 1) + ".jpg").c_str());
+        if (!modeSelectionImages[i]) {
+            Log::Error("Failed to load mode selection image " + std::to_string(i + 1));
+            // 可以加入错误处理代码
+        }
+    }
+}
+
+
 void GameWindow::initGameOverScene() {
     // Add your game over scene initialization code here
     Log::Info("Game Over Scene Initialized");
@@ -581,6 +899,9 @@ void GameWindow::initScene() {
             case MENU:
                 initMenuScene();  // Initialize menu-specific resources
                 break;
+            case MODE_SELECTION:
+                initModeSelectionScene();
+                break;
             case GAME:
                 initGameScene();  // Initialize game-specific resources
                 break;
@@ -607,20 +928,78 @@ void GameWindow::run() {
                     if (ev.keyboard.keycode == ALLEGRO_KEY_ENTER) {
                         Log::Info("Enter Key Pressed - Switching to Game State"); // Debug message for pressing Enter
                         al_stop_samples(); // Stop any currently playing music
-                        currentState = GAME;
-                        menu.gameStart = true; // Update the flag in menu
+                        //currentState = GAME;
+                        currentState = MODE_SELECTION;
+                        //menu.gameStart = true; // Update the flag in menu
                     }
                 }
                 menu.update();
                 break;
+                    
+            case MODE_SELECTION:
+                /*if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
+                    int mouseX = ev.mouse.x;
+                    int mouseY = ev.mouse.y;
+                    for (int i = 0; i < NUM_MODES; ++i) {
+                        if (mouseX >= i * 100 && mouseX < (i + 1) * 100) {
+                            selectedMode = i;
+                            Log::Info("Selected Mode: " + std::to_string(selectedMode + 1));
+                            currentState = GAME;  // 切换到游戏状态
+                            break;
+                        }
+                    }
+                }*/
+                // ... other code
+                if (ev.type == ALLEGRO_EVENT_KEY_UP) {
+                    switch (ev.keyboard.keycode) {
+                        case ALLEGRO_KEY_1:
+                            selectedMode = 0;
+                            Log::Info("Mode 1 Selected");
+                            currentState = GAME;
+                            break;
+                        case ALLEGRO_KEY_2:
+                            selectedMode = 1;
+                            Log::Info("Mode 2 Selected");
+                            currentState = GAME;
+                            break;
+                        case ALLEGRO_KEY_3:
+                            selectedMode = 2;
+                            Log::Info("Mode 3 Selected");
+                            currentState = GAME;
+                            break;
+                    }
+                }
+                break;
 
             case GAME:
+            Log::Info("GAME START");
             //Log::Info("In Menu State");
+            /*if (player.getHp() <= 0) {
+                //Log::Info("Game Over!");
+                currentState = GAME_OVER;
+            }*/
 
             switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
-                mode3();
-                game_player();
+                switch(selectedMode){
+                    case 0: //MODE_1
+                        game.mode1();
+                        game.game_player();
+                        break;
+                    case 1: //MODE_2
+                        game.mode2();
+                        game.game_player();
+                        break;
+                    case 2: //MODE_3
+                        game.mode3();
+                        game.game_player();
+                        break;
+                }
+                if (player.getHp() <= 0) {
+                    Log::Info("Game Over!");
+                    currentState = GAME_OVER;
+                }
+                    
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
 
@@ -676,240 +1055,6 @@ void GameWindow::run() {
     }
 }
 
-void GameWindow::mode1()
-{
-    static double last_spawn_time = 0;
-    static double enemySpawnInterval = 2.0;     
-    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
-        last_spawn_time = al_get_time();
-        float spawnY;
-        float velocityX;
-        EnemyType type;
-
-        // 生成地上的敌人
-        spawnY = 460; // 与玩家相同的高度
-        velocityX = 1.0; // 天上敌人速度的两倍
-        type = EnemyType::GROUND;
-    
-
-        // 随机决定敌人从左侧或右侧出现
-        float spawnX;
-        if (rand() % 2 == 0) {
-            spawnX = -1; // 从屏幕左侧出现
-        } else {
-            spawnX = 801; // 从屏幕右侧出现
-            velocityX = -velocityX; // 改变移动方向
-        }
-
-        // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
-        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
-    }
-    ground_enemy();
-}
-
-void GameWindow::mode2()
-{
-    static double last_spawn_time = 0;
-    static double enemySpawnInterval = 5.0;     
-    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
-        last_spawn_time = al_get_time();
-        float spawnY;
-        float velocityX;
-        EnemyType type;
-
-        // 生成天上的敌人
-        spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
-        velocityX = 1.0; // 初始速度
-        type = EnemyType::AIR;
-
-        // 随机决定敌人从左侧或右侧出现
-        float spawnX;
-        if (rand() % 2 == 0) {
-            spawnX = -1; // 从屏幕左侧出现
-        } else {
-            spawnX = 801; // 从屏幕右侧出现
-            velocityX = -velocityX; // 改变移动方向
-        }
-
-        // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
-        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
-    }
-    sky_enemy();
-}
-
-void GameWindow::sky_enemy()
-{
-    for (auto& enemy : enemies) {
-        enemy.update(); // 更新敌人位置和状态
-
-        // 天空中的敌人继续射击
-        if (enemy.getType() == EnemyType::AIR && enemy.isAlive()) {
-            enemy.shootAtPlayer(player);
-        }
-    }
-
-    // 遍历每个敌人的子弹
-    for (auto& enemy : enemies) {
-        for (auto& bullet : enemy.getBullets()) {
-            bullet.update(); // 更新子弹位置
-            // 检查子弹是否击中玩家
-            if (bullet.is_Alive() && checkCollision(bullet, player)) {
-                player.getHit(1);
-                bullet.setAlive(false); // 子弹击中玩家后消失
-            }
-        }
-    }
-
-    // 删除所有非活动的子弹
-    for (auto& enemy : enemies) {
-        enemy.removeInactiveBullets();
-    }
-}
-
-void GameWindow::ground_enemy()
-{
-    for (auto& enemy : enemies) {
-        enemy.update();
-        if (enemy.isAlive() && checkCollision(player, enemy)) {
-            player.getHit(1);
-            enemy.set_Alive(false);
-        }
-    }
-}
-
-void GameWindow::mode3()
-{
-    static double last_spawn_time = 0;
-    static double enemySpawnInterval = 2.0;     
-    if (al_get_time() - last_spawn_time > enemySpawnInterval) {
-        last_spawn_time = al_get_time();
-        float spawnY;
-        float velocityX;
-        EnemyType type;
-
-        // 随机决定生成哪种类型的敌人
-        if (rand() % 2 == 0) {
-            // 生成天上的敌人
-            spawnY = static_cast<float>(rand() % 300); // 屏幕上半部
-            velocityX = 1.0; // 初始速度
-            type = EnemyType::AIR;
-        } else {
-            // 生成地上的敌人
-            spawnY = 460; // 与玩家相同的高度
-            velocityX = 1.0; // 天上敌人速度的两倍
-            type = EnemyType::GROUND;
-        }
-
-        // 随机决定敌人从左侧或右侧出现
-        float spawnX;
-        if (rand() % 2 == 0) {
-            spawnX = -1; // 从屏幕左侧出现
-        } else {
-            spawnX = 801; // 从屏幕右侧出现
-            velocityX = -velocityX; // 改变移动方向
-        }
-
-        // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
-        enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
-    }
-    ground_enemy();
-    sky_enemy();
-}
-
-
-void GameWindow::game_player()
-{
-    player.update();
-    // Check if the player's health is 0 or less
-    if (player.getHp() <= 0) {
-        //Log::Info("Game Over!");
-        currentState = GAME_OVER;
-    }
-    // 检测子弹与敌人的碰撞
-    for (auto& bullet : player.getBullets()) {
-        if (bullet.isHit()) continue; // 如果子弹已经击中了敌人，跳过这个子弹
-        for (auto& enemy : enemies) {
-            if (checkCollision(bullet, enemy) && enemy.isAlive()) {
-                enemy.hit(bullet.getDamage());
-                bullet.setHit(true); // 标记子弹已经击中敌人
-                bullet.setAlive(false); // 设置子弹为不活跃
-                if(enemy.hp<=0){
-                    score++;
-                    enemy.set_Alive(false);
-                }
-                    break; // 退出内部循环
-            }
-        }
-    }
-    for (auto& enemy : enemies) {
-        if (!enemy.isAlive()) {
-            for (auto& bullet : enemy.getBullets()) {
-                bullet.update();
-                // 也许可以在这里检查子弹是否超出屏幕范围，并将其标记为不活跃
-                if (checkCollision(bullet, player)) {
-                    player.getHit(bullet.getDamage()); // 玩家受到伤害
-                    bullet.setAlive(false); // 子弹消失
-                }
-            }
-        }
-    }
-
-}
-
-bool GameWindow::checkCollision(const Bullet &bullet, const Enemy &enemy) {
-    // Simple circle-rectangle collision detection
-    float distX = std::abs(bullet.x - enemy.x);
-    float distY = std::abs(bullet.y - enemy.y);
-
-    if (distX > (bullet.getSize()/ 2 + Enemy::RADIUS)) { return false; }
-    if (distY > (bullet.getSize()/ 2 + Enemy::RADIUS)) { return false; }
-
-    if (distX <= (bullet.getSize()/ 2)) { return true; } 
-    if (distY <= (bullet.getSize()/ 2)) { return true; }
-
-    // Corner collision
-    float dx = distX - bullet.getSize()/ 2;
-    float dy = distY - bullet.getSize()/ 2;
-    return (dx * dx + dy * dy <= (Enemy::RADIUS * Enemy::RADIUS));
-}
-
-bool GameWindow::checkCollision(const Bullet& bullet, const Player& player) {
-    // Simple AABB (Axis-Aligned Bounding Box) collision check
-    float playerLeft = player.getX();
-    float playerRight = player.getX() + player.PLAYER_SIZE;
-    float playerTop = player.getY();
-    float playerBottom = player.getY() + player.PLAYER_SIZE;
-
-    float bulletLeft = bullet.x;
-    float bulletRight = bullet.x + bullet.getSize();
-    float bulletTop = bullet.y;
-    float bulletBottom = bullet.y + bullet.getSize();
-
-    return (playerLeft < bulletRight && playerRight > bulletLeft &&
-            playerTop < bulletBottom && playerBottom > bulletTop);
-}
-
-bool GameWindow::checkCollision(const Player& player, const Enemy& enemy) {
-    // 獲取玩家和敵人的位置和大小
-    float playerLeft = player.getX();
-    float playerRight = player.getX() + player.PLAYER_SIZE;
-    float playerTop = player.getY();
-    float playerBottom = player.getY() + player.PLAYER_SIZE;
-
-    float enemyLeft = enemy.get_X();
-    float enemyRight = enemy.get_X() + enemy.ENEMY_SIZE;  // 假設敵人有一個SIZE常量
-    float enemyTop = enemy.get_Y();
-    float enemyBottom = enemy.get_Y() + enemy.ENEMY_SIZE;
-
-    // 檢查矩形是否重疊
-    return !(playerLeft > enemyRight || playerRight < enemyLeft ||
-             playerTop > enemyBottom || playerBottom < enemyTop);
-}
-
-
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
 
@@ -924,8 +1069,17 @@ void GameWindow::draw() {
         case MENU:
             menu.draw();
             break;
+        
+        case MODE_SELECTION:
+            // Draw mode selection screen
+            // For example, draw each mode image
+            /*for (int i = 0; i < NUM_MODES; ++i) {
+                al_draw_bitmap(modeSelectionImages[i], i * 100, 0, 0);
+            }*/
+            break;
 
         case GAME:
+            //game.draw();
             currentTime = static_cast<int>(al_get_time() - startTime);
             timeStream << "Time: " << currentTime;
             timeText = timeStream.str();
@@ -948,7 +1102,7 @@ void GameWindow::draw() {
                 }
                 // 但是无论敌人是否活着，都绘制其子弹
                 for (auto& bullet : enemy.getBullets()) {
-                    if (checkCollision(bullet, player)) continue;
+                    if (game.checkCollision(bullet, player)) continue;
                     else bullet.draw();
                     
                 }
@@ -969,6 +1123,9 @@ void GameWindow::draw() {
     al_flip_display();
 }
 
+void GameWindow::setCurrentState(GameState state) {
+    currentState = state;
+}
 ============== 
 File: .\gif.cpp 
 -------------- 
