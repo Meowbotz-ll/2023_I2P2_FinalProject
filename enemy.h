@@ -39,6 +39,7 @@ public:
     float get_X() const;
     float get_Y() const;
     const int ENEMY_SIZE = 10;
+    
 
 private:
     float vx, vy; // 新增：敌人的速度
@@ -49,6 +50,8 @@ private:
     std::vector<Bullet> bullets;  // 将其作为成员变量
     double lastShootTime;
     ALGIF_ANIMATION *walkingGif[4];
+    std::vector<Enemy> enemies;
+
 };
 
 

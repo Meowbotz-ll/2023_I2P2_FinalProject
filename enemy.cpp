@@ -130,7 +130,9 @@ void Enemy::removeInactiveBullets() {
     bullets.erase(std::remove_if(bullets.begin(), bullets.end(),
                    [](const Bullet& bullet) { return !bullet.isAlive(); }),
                    bullets.end());
+                   
 }
+
 
 void Enemy::clearBullets() {
     bullets.clear();

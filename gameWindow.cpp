@@ -358,14 +358,14 @@ void GameWindow::mode2()
         }
         // 遍历天空敌人的子弹并保持它们永远活跃
             for (auto& bullet : enemy.getBullets()) {
-                if(enemy.isAlive()) bullet.setAlive(true);
+                bullet.setAlive(enemy.isAlive());
             }
     }
 
     for (auto& enemy : enemies) {
         for (auto& bullet : enemy.getBullets()) {
             bullet.setAlive(true);
-            if (checkCollision(bullet, player)) {
+            if (bullet.is_Alive() && checkCollision(bullet, player)) {
                 player.getHit(1);
                 bullet.setAlive(false); // Remove the bullet upon collision
             }
@@ -375,6 +375,10 @@ void GameWindow::mode2()
     for (auto& enemy : enemies) {
         if(!enemy.isAlive()) enemy.removeInactiveBullets();
     }
+    // 删除死亡敌人的子弹
+    enemies.erase(std::remove_if(enemies.begin(), enemies.end(),
+                     [](const Enemy& enemy) { return !enemy.isAlive(); }),
+                     enemies.end());
     
 }
 
