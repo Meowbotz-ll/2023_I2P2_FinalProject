@@ -629,7 +629,7 @@ void GameWindow::mode3()
 
 void GameWindow::game_player()
 {
-    player.update(score);
+    player.update(score,ui_font);
     // Check if the player's health is 0 or less
     if (player.getHp() <= 0) {
         //Log::Info("Game Over!");
@@ -794,6 +794,8 @@ void GameWindow::draw() {
             timeText = timeStream.str();
             scoreText = "Score: " + std::to_string(score);
 
+            player.drawUnlockMessage(ui_font);
+            
             float healthPercentage;
             int red, green;
 

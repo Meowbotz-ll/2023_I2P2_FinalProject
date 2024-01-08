@@ -59,9 +59,33 @@ void Player::getHit(int damage) {
         hp = 0;
     }
 }
-
-void Player::update(int score) {
-
+void Player::drawUnlockMessage(ALLEGRO_FONT* font) {
+    if (!unlockMessage.empty() && al_get_time() - messageDisplayTime < 3.0) { // Display for 3 seconds
+        al_draw_text(font, al_map_rgb(255, 255, 255), 400, 200, ALLEGRO_ALIGN_CENTER, unlockMessage.c_str());
+    }
+}
+void Player::update(int score,ALLEGRO_FONT* font) {
+    if (!shotgunUnlocked && score >= 5) {
+        shotgunUnlocked = true;
+        unlockMessage = "Get Shotgun weapon! Press 2 to swap weapon";
+        messageDisplayTime = al_get_time();
+    }
+    if (!bouncingGunUnlocked && score >= 10) {
+        bouncingGunUnlocked = true;
+        unlockMessage = "Get Bouncing Gun weapon! Press 3 to swap weapon";
+        messageDisplayTime = al_get_time();
+    }
+    if (!hexaBlasterUnlocked && score >= 15) {
+        hexaBlasterUnlocked = true;
+        unlockMessage = "Get Hexa Blaster weapon! Press 4 to swap weapon";
+        messageDisplayTime = al_get_time();
+    }
+    if (!bazookaUnlocked && score >= 20) {
+        bazookaUnlocked = true;
+        unlockMessage = "Get Bazooka weapon! Press 5 to swap weapon";
+        messageDisplayTime = al_get_time();
+    }
+    
     if (key_state[ALLEGRO_KEY_1]) {
         currentWeapon = PISTOL;
         Log::Info("Weapon change to pistol");

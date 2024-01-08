@@ -4,6 +4,7 @@
 #include "allegro_setup.h"
 #include "bullet.h"
 #include <vector>
+#include <string>
 
 enum WeaponType {
         PISTOL,
@@ -18,7 +19,7 @@ public:
     ~Player();
     Player();
     void init(float x, float y,const char* gifFile[4]);
-    void update(int score);
+    void update(int score, ALLEGRO_FONT* font);
     void draw();
     void reset();
     void shoot(float target_x, float target_y);
@@ -32,6 +33,7 @@ public:
     void getHit(int damage); // Method to reduce player's health
     const int PLAYER_SIZE = 32;
     const int INITIAL_HP = 10; // Initial health points
+    void drawUnlockMessage(ALLEGRO_FONT* font);
 private:
     float x, y, dy;
     bool onGround, facingRight;
@@ -44,6 +46,12 @@ private:
     ALGIF_ANIMATION *walkingGif[2];
     WeaponType currentWeapon;
     int hp; // Player's health points
+    bool shotgunUnlocked = false;
+    bool bouncingGunUnlocked = false;
+    bool hexaBlasterUnlocked = false;
+    bool bazookaUnlocked = false;
+    std::string unlockMessage = "";
+    double messageDisplayTime = 0.0;
 };
 
 
