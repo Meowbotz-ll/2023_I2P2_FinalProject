@@ -101,7 +101,7 @@ void GameWindow::init() {
         return;
     }
     // Load background image
-    backgroundImage = al_load_bitmap("img/bg.jpeg");
+    backgroundImage = al_load_bitmap("img/background.gif");
     if (!backgroundImage) {
         Log::Error("Failed to load background image");
         return;
@@ -697,6 +697,11 @@ void GameWindow::draw() {
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
             
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            
+            if(backgroundImage != nullptr) {
+                al_draw_bitmap(backgroundImage, 0, 0, 0);
+            }
+
             player.draw();
             for (auto& enemy : enemies) {
                 // 这里只绘制活着的敌人
@@ -710,9 +715,7 @@ void GameWindow::draw() {
                     
                 }
             }
-            if(backgroundImage != nullptr) {
-                al_draw_bitmap(backgroundImage, 0, 0, 0);
-            }
+        
             break;
 
         case LEADERBOARD:
