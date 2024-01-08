@@ -15,6 +15,7 @@ int selectedMode = -1;  // 被選擇的模式，初始值為-1表示未選擇
 GameWindow::GameWindow() : currentState(MENU),previousState(MENU),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
     Log::Info("GameWindow Created");
     init();
+    lastBombTime=0;
     //enemies.push_back(Enemy(100, 100, 0.5));
 }
 
@@ -243,7 +244,7 @@ void GameWindow::initGameScene()
         Log::Info("Game Reset");
         if(backgroundImage!=nullptr)
         {
-        //al_draw_bitmap(backgroundImage, 0, 0, 0);
+        al_draw_bitmap(backgroundImage, 0, 0, 0);
         Log::Info("Background Init");
         }
         gameSceneInitialized=true;
@@ -286,7 +287,8 @@ if (!bombAvailable) return;
         }
     }
 
-    bombAvailable = false; // Set to false to prevent reuse, can add cooldown logic
+    bombAvailable = false;
+    lastBombTime = al_get_time(); // Record the time when bomb was used
 }
 
 void GameWindow::initScene() {
@@ -324,7 +326,7 @@ void GameWindow::run() {
         ALLEGRO_EVENT ev;
         al_wait_for_event(event_queue, &ev);
         initScene();
-        
+        checkBombCooldown();
         switch (currentState) {
             case MENU:
             //Log::Info("In Menu State");
@@ -682,6 +684,21 @@ bool GameWindow::checkCollision(const Player& player, const Enemy& enemy) {
              playerTop > enemyBottom || playerBottom < enemyTop);
 }
 
+// 修改遊戲循環的一部分以更新 GIF
+/*void GameWindow::background_draw() {
+    //ALGIF_ANIMATION * backgroundGIF = algif_load_animation("img/background.gif");
+    ALLEGRO_BITMAP* frameBitmap = algif_get_bitmap(backgroundGIF, al_get_time());
+    if (frameBitmap) {
+        // Get the dimensions of the display
+        int screenWidth = al_get_display_width(display);
+        int screenHeight = al_get_display_height(display);
+
+        // Draw the bitmap to cover the entire screen
+        al_draw_bitmap(frameBitmap, 0, 0, 0);
+    }
+}*/
+
+
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
 
@@ -702,7 +719,6 @@ void GameWindow::draw() {
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 200, ALLEGRO_ALIGN_CENTER, "Press 1 to choose Ground Level");
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 250, ALLEGRO_ALIGN_CENTER, "Press 2 to choose Sky Level");
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "Press 3 to choose Hard Level");
-            al_flip_display();
             break;
 
         case GAME:
@@ -711,16 +727,8 @@ void GameWindow::draw() {
                 al_draw_bitmap(backgroundImage, 0, 0, 0);
             }*/
 
-            al_draw_bitmap(backgroundImage, 0, 0, 0);
-            al_flip_display();
 
-            // 繪製背景
-            /*al_draw_scaled_bitmap(backgroundImage, 0, 0, al_get_bitmap_width(backgroundImage), al_get_bitmap_height(backgroundImage),
-                800, 0, al_get_bitmap_width(backgroundImage), 600, 0);
-
-            // 繪製背景的副本以實現循環重複
-            al_draw_scaled_bitmap(backgroundImage, 0, 0, al_get_bitmap_width(backgroundImage), al_get_bitmap_height(backgroundImage),
-                800 + al_get_bitmap_width(backgroundImage), 0, al_get_bitmap_width(backgroundImage), 600, 0);*/
+            //al_draw_bitmap(backgroundImage, 0, 0, 0);
             currentTime = static_cast<int>(al_get_time() - startTime);
             timeStream << "Time: " << currentTime;
             timeText = timeStream.str();
@@ -739,14 +747,14 @@ void GameWindow::draw() {
 
             
             player.draw();
-            if (!bombAvailable) {
-            double cooldownTime = 30 - (al_get_time() - lastBombTime);
-            std::string cooldownText = "Bomb Cooldown: " + std::to_string(static_cast<int>(cooldownTime)) + "s";
+        if (!bombAvailable) {
+            double remainingCooldown = bombCooldown - (al_get_time() - lastBombTime);
+            remainingCooldown = std::max(0.0, remainingCooldown); // Avoid negative values
+            std::ostringstream cooldownStream;
+            cooldownStream.precision(1); // Set precision for decimal seconds
+            cooldownStream << std::fixed << "Bomb Cooldown: " << remainingCooldown << "s";
+            std::string cooldownText = cooldownStream.str();
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 10, 70, 0, cooldownText.c_str());
-
-            if (al_get_time() - lastBombTime > 30) {
-                bombAvailable = true;
-            }
         }
             for (auto& enemy : enemies) {
                 // 这里只绘制活着的敌人
@@ -776,7 +784,7 @@ void GameWindow::draw() {
 
     }
 
-    //al_flip_display();
+    al_flip_display();
 }
 
 
