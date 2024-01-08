@@ -9,7 +9,8 @@
 const float GRAVITY = 0.5;
 const float JUMP_STRENGTH = -10.0;
 const int INITIAL_HP = 100; // Initial health points
-
+const int INITIAL_X =400;
+const int INITIAL_Y =500;
 Player::Player() {
     for (int i = 0; i < 4; ++i) {
         walkingGif[i] = nullptr;
@@ -201,3 +202,9 @@ void Player::markBulletDead(int index) {
     }
 }
 
+void Player::reset()
+{
+    hp=INITIAL_HP;
+    x=INITIAL_X;
+    y=INITIAL_Y;
+}

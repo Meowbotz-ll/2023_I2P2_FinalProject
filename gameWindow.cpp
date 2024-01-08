@@ -29,7 +29,21 @@ GameWindow::~GameWindow() {
         al_destroy_bitmap(backgroundImage);
     }
 }
+void GameWindow::resetGame() {
+    // Reset player stats, position, etc.
+    player.reset(); // Assuming there is a reset method in Player class
 
+    // Clear and reset enemy list
+    enemies.clear();
+    // Optionally, initialize first set of enemies
+
+    // Reset game score and other relevant stats
+    score = 0;
+    // reset timer
+    startTime = al_get_time(); // Reset the start time to the current time
+    currentTime = 0; // Reset the current time or elapsed time to 0
+    // Reset any other game elements that change during gameplay
+}
 void GameWindow::init() {
     Log::Info("Init Started:");
 
@@ -185,6 +199,8 @@ void GameWindow::initGameScene()
 {
     if(!gameSceneInitialized)
     {
+        resetGame();
+        Log::Info("Game Reset");
         if(backgroundImage!=nullptr)
         {
         al_draw_bitmap(backgroundImage, 0, 0, 0);
@@ -201,15 +217,17 @@ void GameWindow::initScene() {
         switch (currentState) {
             case MENU:
                 initMenuScene();  // Initialize menu-specific resources
+                gameSceneInitialized=false;
                 break;
             case MODE_SELECTION:
                 initModeSelectionScene();
+                gameSceneInitialized=false;
                 break;
             case GAME:
                 initGameScene();  // Initialize game-specific resources
                 break;
             case GAME_OVER:
-
+                gameSceneInitialized=false;
                 break;
             // Add other cases as needed
         }
@@ -271,12 +289,15 @@ void GameWindow::run() {
                     case 0:
                         mode1();
                         game_player();
+                        break;
                     case 1:
                         mode2();
                         game_player();
+                        break;
                     case 2:
                         mode3();
                         game_player();
+                        break;
                 }
                     
                 // Add any other updates here, e.g., for game world, enemies, etc.
@@ -584,8 +605,6 @@ void GameWindow::draw() {
             break;
         
         case MODE_SELECTION:
-            // Draw mode selection screen
-            // For example, draw each mode image
             break;
 
         case GAME:
@@ -622,10 +641,9 @@ void GameWindow::draw() {
             // Drawing code for game over screen
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
              // 繪製返回按鈕
-            al_draw_text(ui_font, al_map_rgb(255, 255, 255), back_button_x, back_button_y, 0, "Back");
+            std::string highScoreText = "High Score: " + std::to_string(score);
+            al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 350, ALLEGRO_ALIGN_CENTER, highScoreText.c_str());
 
-            // 繪製退出按鈕
-            al_draw_text(ui_font, al_map_rgb(255, 255, 255), exit_button_x, exit_button_y, 0, "Exit");
             break;
     }
 

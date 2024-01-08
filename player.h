@@ -18,6 +18,7 @@ public:
     void init(float x, float y,const char* gifFile[4]);
     void update();
     void draw();
+    void reset();
     void shoot(float target_x, float target_y);
     std::vector<Bullet>& getBullets(){
         return bullets;
