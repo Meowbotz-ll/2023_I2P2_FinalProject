@@ -37,7 +37,14 @@ void Bullet::update() {
 
 void Bullet::draw() {
     if(!alive) return;
+    if(isEnemyBullet)
+    {
     al_draw_filled_rectangle(x, y, x + size, y + size, al_map_rgb(255, 255, 255));
+    }
+    else
+    {
+    al_draw_filled_rectangle(x, y, x + size, y + size, al_map_rgb(255, 255, 255));
+    }
 }
 
 void Bullet::setAlive(bool status) {

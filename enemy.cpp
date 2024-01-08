@@ -112,8 +112,8 @@ void Enemy::shootAtPlayer(const Player& player) {
             float bulletSpeed = 2.0f; // 减慢子弹速度
 
             Bullet newBullet(x, y, dx * bulletSpeed, dy * bulletSpeed);
-            newBullet.setSize(10); // 例如，设置子弹大小为10
             newBullet.setEnemyBullet(true); // 设为敌人子弹
+            newBullet.setSize(10); // 例如，设置子弹大小为10
             bullets.push_back(newBullet);
         }
     }

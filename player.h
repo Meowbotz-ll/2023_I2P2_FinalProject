@@ -31,6 +31,7 @@ public:
     int getHp() const { return hp; } // Getter for player's health
     void getHit(int damage); // Method to reduce player's health
     const int PLAYER_SIZE = 32;
+    const int INITIAL_HP = 10; // Initial health points
 private:
     float x, y, dy;
     bool onGround, facingRight;

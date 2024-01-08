@@ -764,9 +764,19 @@ void GameWindow::draw() {
             timeText = timeStream.str();
             scoreText = "Score: " + std::to_string(score);
 
-            // Draw Health Bar
-            currentHealthWidth = (player.getHp() * maxHealthWidth) / 10;
-            al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(255, 0, 0));
+            float healthPercentage;
+            int red, green;
+
+            // ... other parts of the function ...
+
+            // Inside your control structure where you are drawing the health bar:
+            healthPercentage = static_cast<float>(player.getHp()) / static_cast<float>(player.INITIAL_HP);
+            red = static_cast<int>(255 * (1 - healthPercentage)); // Increases as health decreases
+            green = static_cast<int>(255 * healthPercentage); // Decreases as health decreases
+
+            // Now draw the health bar with the calculated colors
+            currentHealthWidth = (player.getHp() * maxHealthWidth) / player.INITIAL_HP;
+            al_draw_filled_rectangle(10, 600 - 30, 10 + currentHealthWidth, 600 - 10, al_map_rgb(red, green, 0));
 
             // Draw text
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
