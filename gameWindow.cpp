@@ -101,11 +101,22 @@ void GameWindow::init() {
         return;
     }
     // Load background image
-    backgroundImage = al_load_bitmap("img/background.gif");
+    backgroundImage = al_load_bitmap("img\background.jpg");
     if (!backgroundImage) {
         Log::Error("Failed to load background image");
         return;
     }
+    //backgroundImage = algif_load_animation("img/background.gif");
+    //ALGIF_ANIMATION * backgroundGIF = algif_load_animation("img/background.gif");
+
+    // 載入背景動畫
+    /*backgroundGIF = algif_load_animation("img/background.gif");
+    if (!backgroundGIF) {
+        Log::Error("Failed to load background GIF");
+        return;
+    }*/
+
+
     // Init background Music
     menuMusic = al_load_sample("audio/Run-Amok(chosic.com).mp3");
     gameMusic = al_load_sample("audio/Sakura-Girl-Daisy-chosic.com_.mp3");
@@ -659,6 +670,20 @@ bool GameWindow::checkCollision(const Player& player, const Enemy& enemy) {
              playerTop > enemyBottom || playerBottom < enemyTop);
 }
 
+// 修改遊戲循環的一部分以更新 GIF
+/*void GameWindow::background_draw() {
+    //ALGIF_ANIMATION * backgroundGIF = algif_load_animation("img/background.gif");
+    ALLEGRO_BITMAP* frameBitmap = algif_get_bitmap(backgroundGIF, al_get_time());
+    if (frameBitmap) {
+        // Get the dimensions of the display
+        int screenWidth = al_get_display_width(display);
+        int screenHeight = al_get_display_height(display);
+
+        // Draw the bitmap to cover the entire screen
+        al_draw_bitmap(frameBitmap, 0, 0, 0);
+    }
+}*/
+
 
 void GameWindow::draw() {
     al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -698,10 +723,11 @@ void GameWindow::draw() {
             
             al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             
+            // Draw background first
             if(backgroundImage != nullptr) {
                 al_draw_bitmap(backgroundImage, 0, 0, 0);
             }
-
+            
             player.draw();
             for (auto& enemy : enemies) {
                 // 这里只绘制活着的敌人
