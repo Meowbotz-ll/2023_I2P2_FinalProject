@@ -54,8 +54,9 @@ public:
     void mode3();
     void initModeSelectionScene();
     void resetGame();
-    void updateLeaderBoard();
     void initLeaderboardScene();
+    void updateLeaderBoard();
+    
     void useBomb();
     void checkBombCooldown();
 private:

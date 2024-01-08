@@ -61,17 +61,17 @@ void Player::getHit(int damage) {
     }
 }
 
-void Player::update() {
+void Player::update(int score) {
 
     if (key_state[ALLEGRO_KEY_1]) {
         currentWeapon = PISTOL;
         Log::Info("Weapon change to pistol");
     }
-    if (key_state[ALLEGRO_KEY_2]) {
+    if (key_state[ALLEGRO_KEY_2] && score>=5) {
         currentWeapon = SHOTGUN;
         Log::Info("Weapon change to shotgun");
     }
-    if (key_state[ALLEGRO_KEY_3]) {
+    if (key_state[ALLEGRO_KEY_3] && score>=10) {
         currentWeapon = BAZOOKA;
         Log::Info("Weapon change to bazooka");
     }
