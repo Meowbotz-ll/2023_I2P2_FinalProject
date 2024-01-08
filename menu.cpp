@@ -20,6 +20,11 @@ if (!font) {
         //Log::Error("Font not loaded");
         return;
     }
+    for (int i = 0; i < 600; i++) {
+        int value = static_cast<int>(255.0 * (599 - i) / 599);
+        al_draw_filled_rectangle(0, i, 800, i + 1, al_map_rgb(value, value / 2, 0));
+    }
+
     
     // Draw existing text
     al_draw_text(font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "Press Enter to Start");

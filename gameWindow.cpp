@@ -204,6 +204,11 @@ void GameWindow::initLeaderboardScene()
         Log::Error("Failed to load title font");
         return; // Early return if font loading fails
     }
+    for (int i = 0; i < 600; i++) {
+        int value = static_cast<int>(255.0 * (599 - i) / 599);
+        al_draw_filled_rectangle(0, i, 800, i + 1, al_map_rgb(value, value / 2, value / 2));
+    }
+
 
     // Draw the title "Leaderboard"
     al_draw_text(title_font, al_map_rgb(255, 215, 0), 400, 50, ALLEGRO_ALIGN_CENTER, "Leaderboard");
@@ -249,7 +254,8 @@ void GameWindow::initGameScene()
         }
         gameSceneInitialized=true;
     }
-    al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+    //al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+    al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 }
 void GameWindow::updateLeaderBoard() {
     std::vector<int> scores;
@@ -731,7 +737,7 @@ bool GameWindow::checkCollision(const Player& player, const Enemy& enemy) {
 
 
 void GameWindow::draw() {
-    al_clear_to_color(al_map_rgb(0, 0, 0));
+    al_clear_to_color(al_map_rgb(255, 255, 255));
 
     // Move the declarations outside the switch statement
     std::ostringstream timeStream;
@@ -746,6 +752,11 @@ void GameWindow::draw() {
             break;
         
         case MODE_SELECTION:
+            for (int i = 0; i < 600; i++) {
+                int value = static_cast<int>(255.0 * (599 - i) / 599);
+                al_draw_filled_rectangle(0, i, 800, i + 1, al_map_rgb(value, 0, value));
+            }
+
                     // Display instructions for choosing different levels
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 200, ALLEGRO_ALIGN_CENTER, "Press 1 to choose Ground Level");
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 250, ALLEGRO_ALIGN_CENTER, "Press 2 to choose Sky Level");
@@ -757,7 +768,12 @@ void GameWindow::draw() {
             /*if(backgroundImage != nullptr) {
                 al_draw_bitmap(backgroundImage, 0, 0, 0);
             }*/
-
+            // 绘制纵向渐变蓝色矩形
+            for (int i = 0; i < 600; i++) {
+                // 计算蓝色值，使其从浅蓝渐变到深蓝
+                int blue_value = static_cast<int>(255.0 * (599 - i) / 599);  // 蓝色值从255 (底部) 渐变到0 (顶部)
+                al_draw_filled_rectangle(0, i, 800, i + 1, al_map_rgb(0, 0, blue_value));
+            }
 
             //al_draw_bitmap(backgroundImage, 0, 0, 0);
             currentTime = static_cast<int>(al_get_time() - startTime);
@@ -783,7 +799,7 @@ void GameWindow::draw() {
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 10, 0, timeText.c_str());
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 10, 40, 0, scoreText.c_str());
             
-            al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
+            //al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
             
 
             
@@ -816,6 +832,11 @@ void GameWindow::draw() {
             initLeaderboardScene();
             break;
         case GAME_OVER:
+            for (int i = 0; i < 600; i++) {
+                int value = static_cast<int>(255.0 * (599 - i) / 599);
+                al_draw_filled_rectangle(0, i, 800, i + 1, al_map_rgb(value, value, 0));
+            }
+
             // Drawing code for game over screen
             al_draw_text(ui_font, al_map_rgb(255, 0, 0), 400, 300, ALLEGRO_ALIGN_CENTER, "Game Over");
              // 繪製返回按鈕
