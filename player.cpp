@@ -196,8 +196,8 @@ void Player::shoot(float target_x, float target_y) {
     switch (currentWeapon) {
         case PISTOL: {
             Bullet newBullet(x, y, dx, dy);
-            newBullet.setDamage(2);
-            newBullet.setSize(10);
+            newBullet.setDamage(3);
+            newBullet.setSize(15);
             bullets.push_back(newBullet);
             break;
         }
@@ -207,7 +207,7 @@ void Player::shoot(float target_x, float target_y) {
                 float newDx = dx * std::cos(angle) - dy * std::sin(angle);
                 float newDy = dy * std::cos(angle) + dx * std::sin(angle);
                 Bullet newBullet(x, y, newDx, newDy);
-                newBullet.setSize(20);
+                newBullet.setSize(15);
                 newBullet.setDamage(2);
                 bullets.push_back(newBullet);
             }
@@ -215,7 +215,7 @@ void Player::shoot(float target_x, float target_y) {
         }
         case BAZOOKA: {
             Bullet bazookaBullet(x, y, dx, dy);
-            bazookaBullet.setSize(30); // Adjusted size for the bazooka bullet
+            bazookaBullet.setSize(20); // Adjusted size for the bazooka bullet
             bazookaBullet.setDamage(100);
             bullets.push_back(bazookaBullet);
             break;
@@ -223,15 +223,15 @@ void Player::shoot(float target_x, float target_y) {
         case HEXA_BLASTER: {
         Bullet hexaBullet(x, y, dx, dy);
         hexaBullet.setSize(15);
-        hexaBullet.setDamage(2); // Initial impact damage
+        hexaBullet.setDamage(3); // Initial impact damage
         hexaBullet.setExploding(true); // Flag to identify this as an exploding bullet
         bullets.push_back(hexaBullet);
         break;
 }
         case BOUNCING_GUN:{
             Bullet bouncingBullet(x, y, dx, dy); // true for bouncing
-            bouncingBullet.setSize(15);
-            bouncingBullet.setDamage(2); // Adjust damage as needed
+            bouncingBullet.setSize(20);
+            bouncingBullet.setDamage(3); // Adjust damage as needed
             bouncingBullet.setBouncing(true);
             bouncingBullet.setBounceCount(5);
             bullets.push_back(bouncingBullet);
