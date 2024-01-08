@@ -12,7 +12,7 @@ const int NUM_MODES = 3;  // 定義模式的數量
 ALLEGRO_BITMAP* modeSelectionImages[NUM_MODES];  // 保存模式選擇界面的圖片
 int selectedMode = -1;  // 被選擇的模式，初始值為-1表示未選擇
 
-GameWindow::GameWindow() : currentState(MENU),previousState(MENU),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
+GameWindow::GameWindow() : currentState(MENU),previousState(GAME_OVER),backgroundImage(nullptr),doexit(false),gameSceneInitialized(false){
     Log::Info("GameWindow Created");
     init();
     lastBombTime=0;
@@ -193,6 +193,7 @@ void GameWindow::initMenuScene()
     while (inFile >> score) {
         leaderboardScores.push_back(score);
     }
+    al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
     inFile.close();
     Log::Info("Score Loaded");
 }
@@ -254,7 +255,6 @@ void GameWindow::initGameScene()
         }
         gameSceneInitialized=true;
     }
-    //al_play_sample(menuMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
     al_play_sample(gameMusic, 1.0, 0.0, 1.0, ALLEGRO_PLAYMODE_LOOP, NULL);
 }
 void GameWindow::updateLeaderBoard() {

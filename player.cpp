@@ -67,22 +67,22 @@ void Player::drawUnlockMessage(ALLEGRO_FONT* font) {
 void Player::update(int score,ALLEGRO_FONT* font) {
     if (!shotgunUnlocked && score >= 5) {
         shotgunUnlocked = true;
-        unlockMessage = "Get Shotgun weapon! Press 2 to swap weapon";
+        unlockMessage = "Get Shotgun weapon!";
         messageDisplayTime = al_get_time();
     }
     if (!bouncingGunUnlocked && score >= 10) {
         bouncingGunUnlocked = true;
-        unlockMessage = "Get Bouncing Gun weapon! Press 3 to swap weapon";
+        unlockMessage = "Get Bouncing Gun weapon!";
         messageDisplayTime = al_get_time();
     }
     if (!hexaBlasterUnlocked && score >= 15) {
         hexaBlasterUnlocked = true;
-        unlockMessage = "Get Hexa Blaster weapon! Press 4 to swap weapon";
+        unlockMessage = "Get Hexa Blaster weapon!";
         messageDisplayTime = al_get_time();
     }
     if (!bazookaUnlocked && score >= 20) {
         bazookaUnlocked = true;
-        unlockMessage = "Get Bazooka weapon! Press 5 to swap weapon";
+        unlockMessage = "Get Bazooka weapon!";
         messageDisplayTime = al_get_time();
     }
     
