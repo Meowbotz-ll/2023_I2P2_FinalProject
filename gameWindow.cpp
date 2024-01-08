@@ -731,8 +731,4 @@ void GameWindow::draw() {
     al_flip_display();
 }
 
-int GameWindow::getScore()
-{
-    return score;
-}
 

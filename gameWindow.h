@@ -54,6 +54,9 @@ public:
     void mode3();
     void initModeSelectionScene();
     void resetGame();
+    void initLeaderboardScene();
+    void updateLeaderBoard();
+    
 private:
     ALLEGRO_DISPLAY *display;
     ALLEGRO_EVENT_QUEUE *event_queue;
