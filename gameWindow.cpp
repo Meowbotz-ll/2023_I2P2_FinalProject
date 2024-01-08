@@ -726,7 +726,7 @@ void GameWindow::draw() {
             }*/
 
 
-            al_draw_bitmap(backgroundImage, 0, 0, 0);
+            //al_draw_bitmap(backgroundImage, 0, 0, 0);
             currentTime = static_cast<int>(al_get_time() - startTime);
             timeStream << "Time: " << currentTime;
             timeText = timeStream.str();
