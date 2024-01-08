@@ -67,7 +67,7 @@ void Enemy::hit(int damage) {
 }
 
 bool Enemy::isAlive() const {
-    return hp > 0;
+    return alive;
 }
 
 void Enemy::set_Alive(bool status) {

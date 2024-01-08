@@ -225,7 +225,7 @@ void GameWindow::run() {
 
             switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
-                mode3();
+                mode2();
                 game_player();
                 // Add any other updates here, e.g., for game world, enemies, etc.
                 break;
@@ -358,7 +358,7 @@ void GameWindow::mode2()
         }
         // 遍历天空敌人的子弹并保持它们永远活跃
             for (auto& bullet : enemy.getBullets()) {
-                bullet.setAlive(true);
+                if(enemy.isAlive()) bullet.setAlive(true);
             }
     }
 
@@ -373,7 +373,7 @@ void GameWindow::mode2()
     }
 
     for (auto& enemy : enemies) {
-        enemy.removeInactiveBullets();
+        if(!enemy.isAlive()) enemy.removeInactiveBullets();
     }
     
 }
