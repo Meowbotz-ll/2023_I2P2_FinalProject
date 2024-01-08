@@ -704,7 +704,6 @@ void GameWindow::draw() {
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 200, ALLEGRO_ALIGN_CENTER, "Press 1 to choose Ground Level");
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 250, ALLEGRO_ALIGN_CENTER, "Press 2 to choose Sky Level");
             al_draw_text(ui_font, al_map_rgb(255, 255, 255), 400, 300, ALLEGRO_ALIGN_CENTER, "Press 3 to choose Hard Level");
-            al_flip_display();
             break;
 
         case GAME:
@@ -713,8 +712,7 @@ void GameWindow::draw() {
                 al_draw_bitmap(backgroundImage, 0, 0, 0);
             }*/
 
-            al_draw_bitmap(backgroundImage, 0, 0, 0);
-            al_flip_display();
+            //al_draw_bitmap(backgroundImage, 0, 0, 0);
 
             // 繪製背景
             /*al_draw_scaled_bitmap(backgroundImage, 0, 0, al_get_bitmap_width(backgroundImage), al_get_bitmap_height(backgroundImage),
@@ -778,7 +776,7 @@ void GameWindow::draw() {
 
     }
 
-    //al_flip_display();
+    al_flip_display();
 }
 
 
