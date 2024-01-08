@@ -4,7 +4,6 @@
 #include "allegro_setup.h"
 #include "bullet.h"
 #include <vector>
-
 enum WeaponType {
         PISTOL,
         SHOTGUN,
