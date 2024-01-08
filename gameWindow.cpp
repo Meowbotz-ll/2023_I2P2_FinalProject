@@ -240,32 +240,27 @@ void GameWindow::run() {
                 break;
                     
             case MODE_SELECTION:
-                if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_UP) {
-                    // Check which mode image was clicked and switch to that mode
-                    // For example:
-                    // if (clicked on mode 1 image) {
-                    //     currentState = GAME;  // or another specific mode
-                    // }
-                    // 根據鼠標點擊的位置判斷選擇的模式
-                    int mouseX = ev.mouse.x;
-                    int mouseY = ev.mouse.y;
-                    selectedMode = mouseX / 100;  // 假設每個模式圖片的寬度為100
-                    Log::Info("Selected Mode: " + std::to_string(selectedMode + 1));
-                    // 在此添加根據選擇的模式進行相應處理的代碼
-                    switch (selectedMode) {
-                        case MODE_1:
+                if (ev.type == ALLEGRO_EVENT_KEY_UP) {
+                    switch (ev.keyboard.keycode) {
+                        case ALLEGRO_KEY_1:
+                            selectedMode = 0;
+                            Log::Info("Mode 1 Selected");
                             currentState = GAME;
                             break;
-                        case MODE_2:
+                        case ALLEGRO_KEY_2:
+                            selectedMode = 1;
+                            Log::Info("Mode 2 Selected");
                             currentState = GAME;
                             break;
-                        case MODE_3:
+                        case ALLEGRO_KEY_3:
+                            selectedMode = 2;
+                            Log::Info("Mode 3 Selected");
                             currentState = GAME;
                             break;
                     }
                 }
-                // ... other code
                 break;
+
 
             case GAME:
             //Log::Info("In Menu State");
@@ -273,13 +268,13 @@ void GameWindow::run() {
             switch (ev.type) {
             case ALLEGRO_EVENT_TIMER:
                 switch(selectedMode){
-                    case MODE_1:
+                    case 0:
                         mode1();
                         game_player();
-                    case MODE_2:
+                    case 1:
                         mode2();
                         game_player();
-                    case MODE_3:
+                    case 2:
                         mode3();
                         game_player();
                 }
