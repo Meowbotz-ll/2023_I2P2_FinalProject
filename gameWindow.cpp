@@ -509,7 +509,7 @@ void GameWindow::mode1()
         }
 
         // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemies.push_back(Enemy(spawnX, spawnY, 4, velocityX, type,enemyGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     ground_enemy();
@@ -540,7 +540,7 @@ void GameWindow::mode2()
         }
 
         // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemies.push_back(Enemy(spawnX, spawnY, 8, velocityX, type,enemyGif));//air
         enemySpawnInterval = std::max(1.0, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     sky_enemy();
@@ -580,7 +580,7 @@ void GameWindow::ground_enemy()
     for (auto& enemy : enemies) {
         enemy.update();
         if (enemy.isAlive() && checkCollision(player, enemy)) {
-            player.getHit(1);
+            player.getHit(2);
             enemy.set_Alive(false);
         }
     }
@@ -619,7 +619,7 @@ void GameWindow::mode3()
         }
 
         // 添加敌人到列表
-        enemies.push_back(Enemy(spawnX, spawnY, velocityX, type,enemyGif));//air
+        enemies.push_back(Enemy(spawnX, spawnY, 8, velocityX, type,enemyGif));//air
         enemySpawnInterval = std::max(0.7, enemySpawnInterval - 0.1); // 逐渐减少间隔时间
     }
     ground_enemy();

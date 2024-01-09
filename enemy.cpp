@@ -4,7 +4,7 @@
 #include <cmath>
 #include <algorithm>
 
-Enemy::Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4]) 
+Enemy::Enemy(float x, float y, int hp, float vx, EnemyType type,const char* gifFile[4]) 
     : x(x), y(y), hp(DEFAULT_HP), vx(vx), color(al_map_rgb(255, 255, 0)), alive(true), offScreen(false), type(type), lastShootTime(0) {
         for(int i = 0; i < 4; i++) {
         walkingGif[i] = algif_load_animation(gifFile[i]);

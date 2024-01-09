@@ -20,7 +20,7 @@ public:
     float x, y;
     int hp;  // 默认的敌人生命值
     //EnemyType type;
-    Enemy(float x, float y, float vx, EnemyType type,const char* gifFile[4]);
+    Enemy(float x, float y, int hp, float vx, EnemyType type,const char* gifFile[4]);
     void update();
     void draw();
     void hit(int damage);

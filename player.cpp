@@ -196,7 +196,7 @@ void Player::shoot(float target_x, float target_y) {
     switch (currentWeapon) {
         case PISTOL: {
             Bullet newBullet(x, y, dx, dy);
-            newBullet.setDamage(3);
+            newBullet.setDamage(2);
             newBullet.setSize(15);
             bullets.push_back(newBullet);
             break;
@@ -208,7 +208,7 @@ void Player::shoot(float target_x, float target_y) {
                 float newDy = dy * std::cos(angle) + dx * std::sin(angle);
                 Bullet newBullet(x, y, newDx, newDy);
                 newBullet.setSize(15);
-                newBullet.setDamage(2);
+                newBullet.setDamage(1);
                 bullets.push_back(newBullet);
             }
             break;
